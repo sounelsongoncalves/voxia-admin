@@ -1,0 +1,113 @@
+
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { trailersRepo, Trailer } from '../repositories/trailersRepo';
+import { Status } from '../types';
+
+export const TrailersList: React.FC = () => {
+  const navigate = useNavigate();
+  const [trailers, setTrailers] = useState<Trailer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrailers = async () => {
+      try {
+        const data = await trailersRepo.getTrailers();
+        setTrailers(data);
+      } catch (error) {
+        console.error('Failed to fetch trailers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrailers();
+  }, []);
+
+  const handleAdd = () => navigate('/trailers/create');
+
+  const handleEdit = (id: string) => {
+    navigate(`/trailers/edit/${id}`);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-txt-primary">Gestão de Reboques</h1>
+          <p className="text-sm text-txt-tertiary mt-1">Controle de semirreboques e implementos.</p>
+        </div>
+        <button
+          onClick={handleAdd}
+          className="flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-bg-main font-bold rounded-lg transition-colors shadow-lg shadow-brand-primary/20"
+        >
+          <span className="material-symbols-outlined">add</span>
+          Adicionar Reboque
+        </button>
+      </div>
+
+      <div className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-surface-border">
+          <input type="text" placeholder="Buscar reboque..." className="w-full max-w-md bg-bg-main border border-surface-border rounded-lg py-2 px-4 text-sm text-txt-primary focus:border-brand-primary outline-none" />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-surface-3 text-txt-secondary uppercase text-xs font-semibold tracking-wider">
+              <tr>
+                <th className="px-6 py-4 rounded-tl-lg">ID / Matrícula</th>
+                <th className="px-6 py-4">Tipo</th>
+                <th className="px-6 py-4">Localização</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right rounded-tr-lg">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-border bg-surface-1">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-txt-tertiary">
+                    Carregando reboques...
+                  </td>
+                </tr>
+              ) : trailers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-txt-tertiary">
+                    Nenhum reboque cadastrado
+                  </td>
+                </tr>
+              ) : (
+                trailers.map((trailer) => (
+                  <tr key={trailer.id} className="hover:bg-surface-2 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-txt-primary font-mono font-bold">{trailer.plate}</span>
+                        <span className="text-xs text-txt-tertiary">{trailer.id.substring(0, 12)}...</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-txt-secondary">{trailer.type}</td>
+                    <td className="px-6 py-4 text-txt-tertiary">{trailer.current_location || 'Desconhecida'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${trailer.status === Status.Active ? 'bg-brand-primary/10 text-brand-primary border-brand-primary/20' :
+                        trailer.status === Status.Error ? 'bg-semantic-error/10 text-semantic-error border-semantic-error/20' :
+                          'bg-surface-3 text-txt-disabled border-surface-border'
+                        }`}>
+                        {trailer.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleEdit(trailer.id)}
+                        className="text-txt-tertiary hover:text-brand-primary transition-colors"
+                      >
+                        <span className="material-symbols-outlined">edit</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
