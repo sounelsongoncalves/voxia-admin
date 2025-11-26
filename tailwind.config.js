@@ -11,9 +11,9 @@ export default {
         extend: {
             colors: {
                 brand: {
-                    primary: '#2b8cee', // Azul Principal
-                    secondary: '#34D399', // Verde Água (Action)
-                    hover: '#1a7bd9', // Azul um pouco mais escuro para hover
+                    primary: '#2563EB', // Azul Profundo (Royal Blue) - Cor principal
+                    secondary: '#3B82F6', // Azul Claro (Action)
+                    hover: '#1D4ED8', // Azul Escuro para hover
                 },
                 bg: {
                     main: '#101922', // Background Dark
