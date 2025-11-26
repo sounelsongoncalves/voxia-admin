@@ -4,12 +4,12 @@ import { getMessaging, getToken } from "firebase/messaging";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyBrqV1QDLs1nC605U47NLQeo2MG1hizL_w",
-    authDomain: "truckapp-bdf31.firebaseapp.com",
-    projectId: "truckapp-bdf31",
-    storageBucket: "truckapp-bdf31.firebasestorage.app",
-    messagingSenderId: "848525359650",
-    appId: "1:848525359650:web:11535e84e669a5adf3687b"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
@@ -20,7 +20,7 @@ export const requestForToken = () => {
     return getToken(messaging, {
         // ⚠️ IMPORTANTE: Você precisa gerar este par de chaves no Firebase Console!
         // Vá em Project Settings -> Cloud Messaging -> Web Push certificates -> Generate Key pair
-        vapidKey: 'BDO4N6_2AEQaUq1UMXm_NqNcRPw_s3yX42bxO4bKQyaV3XVlivNwsoZtwA_acWBZBQ8RRaGaeMwjvGwxT6n7uLs'
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
     })
         .then((currentToken) => {
             if (currentToken) {

@@ -26,3 +26,4 @@ dist-ssr
 # Sensitive Scripts
 set_secret.py
 login_response.json
+.env
