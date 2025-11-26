@@ -4,8 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { trailersRepo, Trailer } from '../repositories/trailersRepo';
 import { Status } from '../types';
 
+import { useToast } from '../components/ToastContext';
+
 export const TrailersList: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [trailers, setTrailers] = useState<Trailer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +31,20 @@ export const TrailersList: React.FC = () => {
 
   const handleEdit = (id: string) => {
     navigate(`/trailers/edit/${id}`);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('Tem certeza que deseja excluir este reboque?')) {
+      try {
+        await trailersRepo.deleteTrailer(id);
+        setTrailers(trailers.filter(t => t.id !== id));
+        showToast('Reboque excluído com sucesso', 'success');
+      } catch (error) {
+        console.error('Failed to delete trailer:', error);
+        showToast('Erro ao excluir reboque', 'error');
+      }
+    }
   };
 
   return (
@@ -94,12 +111,22 @@ export const TrailersList: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleEdit(trailer.id)}
-                        className="text-txt-tertiary hover:text-brand-primary transition-colors"
-                      >
-                        <span className="material-symbols-outlined">edit</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(trailer.id)}
+                          className="p-2 text-txt-tertiary hover:text-brand-primary hover:bg-surface-3 rounded-lg transition-colors"
+                          title="Editar"
+                        >
+                          <span className="material-symbols-outlined text-xl">edit</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(e, trailer.id)}
+                          className="p-2 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded-lg transition-colors"
+                          title="Excluir"
+                        >
+                          <span className="material-symbols-outlined text-xl">delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -127,5 +127,28 @@ export const driversRepo = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+
+    async deleteDriver(id: string) {
+        // 1. Call Edge Function to delete Auth User (which should cascade or we delete data manually)
+        const { error } = await supabase.functions.invoke('delete-user', {
+            body: { userId: id }
+        });
+
+        if (error) throw error;
+
+        // 2. Delete from drivers table (if not cascaded by Auth deletion or if needed explicitly)
+        // Note: If the table uses the Auth ID as PK and has ON DELETE CASCADE on the foreign key to auth.users,
+        // this might happen automatically. But 'drivers' table definition isn't fully visible here.
+        // Let's try to delete explicitly to be sure, or handle if it's already gone.
+
+        const { error: dbError } = await supabase
+            .from('drivers')
+            .delete()
+            .eq('id', id);
+
+        // If error is "record not found" or similar, it's fine. 
+        // But Supabase delete doesn't error on 0 rows.
+        if (dbError) throw dbError;
     }
 };

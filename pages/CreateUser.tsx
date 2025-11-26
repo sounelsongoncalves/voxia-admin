@@ -136,6 +136,7 @@ export const CreateUser: React.FC = () => {
                   <option value="">Selecione a função...</option>
                   <option value="manager">Gestor de Frota</option>
                   <option value="operator">Operador</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
             </div>

@@ -4,8 +4,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { driversRepo } from '../repositories/driversRepo';
 import { Driver, Status } from '../types';
 
+import { useToast } from '../components/ToastContext';
+
 export const DriversList: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +30,20 @@ export const DriversList: React.FC = () => {
 
     fetchDrivers();
   }, [searchParams]);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('Tem certeza que deseja excluir este motorista?')) {
+      try {
+        await driversRepo.deleteDriver(id);
+        setDrivers(drivers.filter(d => d.id !== id));
+        showToast('Motorista excluído com sucesso', 'success');
+      } catch (error) {
+        console.error('Failed to delete driver:', error);
+        showToast('Erro ao excluir motorista', 'error');
+      }
+    }
+  };
 
   // Update URL when filter changes
   const handleFilterChange = (value: string) => {
@@ -187,6 +204,13 @@ export const DriversList: React.FC = () => {
                           title="Editar"
                         >
                           <span className="material-symbols-outlined text-xl">edit</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(e, driver.id)}
+                          className="p-2 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded-lg transition-colors"
+                          title="Excluir"
+                        >
+                          <span className="material-symbols-outlined text-xl">delete</span>
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/drivers/${driver.id}`); }}

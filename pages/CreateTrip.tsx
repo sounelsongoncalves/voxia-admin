@@ -65,10 +65,7 @@ export const CreateTrip: React.FC = () => {
       setError('Data e hora de partida são obrigatórias');
       return;
     }
-    if (!formData.jobDescription) {
-      setError('Descrição do trabalho é obrigatória');
-      return;
-    }
+
 
     setLoading(true);
     try {
@@ -247,7 +244,7 @@ export const CreateTrip: React.FC = () => {
                 )}
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-txt-secondary">Descrição do Trabalho / Carga <span className="text-semantic-error">*</span></label>
+                  <label className="text-sm font-medium text-txt-secondary">Descrição do Trabalho / Carga</label>
                   <textarea
                     name="jobDescription"
                     value={formData.jobDescription}
@@ -255,7 +252,6 @@ export const CreateTrip: React.FC = () => {
                     rows={3}
                     placeholder="Descreva os detalhes da carga e instruções especiais..."
                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary resize-none"
-                    required
                   />
                 </div>
               </div>

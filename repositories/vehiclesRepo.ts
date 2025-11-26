@@ -98,5 +98,14 @@ export const vehiclesRepo = {
             .eq('id', id);
 
         if (error) throw error;
+    },
+
+    async deleteVehicle(id: string) {
+        const { error } = await supabase
+            .from('vehicles')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 };

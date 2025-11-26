@@ -79,6 +79,19 @@ export const Settings: React.FC<SettingsProps> = ({ initialTab = 'general' }) =>
     }
   };
 
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este usuário permanentemente?')) return;
+
+    try {
+      await adminsRepo.deleteAdmin(id);
+      setAdmins(admins.filter(a => a.id !== id));
+      showToast('Usuário excluído com sucesso.', 'success');
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      showToast('Erro ao excluir usuário: ' + (error.message || 'Erro desconhecido'), 'error');
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -261,7 +274,13 @@ export const Settings: React.FC<SettingsProps> = ({ initialTab = 'general' }) =>
                       </button>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      {/* Actions placeholder */}
+                      <button
+                        onClick={() => handleDeleteUser(admin.id)}
+                        className="p-1.5 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded transition-colors"
+                        title="Excluir Usuário"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -5,8 +5,11 @@ import { vehiclesRepo } from '../repositories/vehiclesRepo';
 import { driversRepo } from '../repositories/driversRepo';
 import { Vehicle, Driver, Status } from '../types';
 
+import { useToast } from '../components/ToastContext';
+
 export const VehiclesList: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -33,6 +36,20 @@ export const VehiclesList: React.FC = () => {
 
     fetchData();
   }, [searchParams]);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('Tem certeza que deseja excluir este veículo?')) {
+      try {
+        await vehiclesRepo.deleteVehicle(id);
+        setVehicles(vehicles.filter(v => v.id !== id));
+        showToast('Veículo excluído com sucesso', 'success');
+      } catch (error) {
+        console.error('Failed to delete vehicle:', error);
+        showToast('Erro ao excluir veículo', 'error');
+      }
+    }
+  };
 
   const handleFilterChange = (value: string) => {
     setStatusFilter(value);
@@ -194,6 +211,13 @@ export const VehiclesList: React.FC = () => {
                           onClick={(e) => { e.stopPropagation(); navigate(`/vehicles/create?id=${vehicle.id}`); }}
                         >
                           <span className="material-symbols-outlined text-xl">edit</span>
+                        </button>
+                        <button
+                          className="p-2 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded-lg transition-colors"
+                          title="Excluir"
+                          onClick={(e) => handleDelete(e, vehicle.id)}
+                        >
+                          <span className="material-symbols-outlined text-xl">delete</span>
                         </button>
                         <button
                           className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-3 rounded-lg transition-colors"

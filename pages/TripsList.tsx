@@ -4,8 +4,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { tripsRepo } from '../repositories/tripsRepo';
 import { Trip, Status } from '../types';
 
+import { useToast } from '../components/ToastContext';
+
 export const TripsList: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +27,20 @@ export const TripsList: React.FC = () => {
     };
     fetchTrips();
   }, []);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm('Tem certeza que deseja excluir esta viagem?')) {
+      try {
+        await tripsRepo.deleteTrip(id);
+        setTrips(trips.filter(t => t.id !== id));
+        showToast('Viagem excluída com sucesso', 'success');
+      } catch (error) {
+        console.error('Failed to delete trip:', error);
+        showToast('Erro ao excluir viagem', 'error');
+      }
+    }
+  };
 
   const handleFilterChange = (value: string) => {
     setStatusFilter(value);
@@ -123,6 +140,13 @@ export const TripsList: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); navigate('/trips/create'); }}
                       >
                         <span className="material-symbols-outlined text-xl">edit</span>
+                      </button>
+                      <button
+                        className="p-2 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded-lg transition-colors"
+                        title="Excluir"
+                        onClick={(e) => handleDelete(e, trip.id)}
+                      >
+                        <span className="material-symbols-outlined text-xl">delete</span>
                       </button>
                       <button
                         className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-3 rounded-lg transition-colors"

@@ -313,5 +313,14 @@ export const tripsRepo = {
             tempRear: trip.temp_rear_c,
             jobDescription: trip.job_description,
         }));
+    },
+
+    async deleteTrip(id: string) {
+        const { error } = await supabase
+            .from('trips')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 };

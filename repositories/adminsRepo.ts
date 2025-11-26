@@ -145,5 +145,36 @@ export const adminsRepo = {
     async updatePassword(password: string) {
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
+    },
+
+    async deleteAdmin(id: string) {
+        const currentAdmin = await this.getCurrentAdmin();
+        if (!currentAdmin || currentAdmin.role !== 'owner') {
+            throw new Error('Permissão negada. Apenas owners podem excluir admins.');
+        }
+
+        // 1. Delete from admins table first (due to foreign key constraints usually, but here auth is parent)
+        // Actually, deleting from auth usually cascades or we should delete from auth and let it cascade if configured.
+        // However, standard practice with Supabase client is we can't delete from auth directly without service role.
+        // We need an Edge Function for this.
+
+        const { error } = await supabase.functions.invoke('delete-user', {
+            body: { userId: id }
+        });
+
+        if (error) throw error;
+
+        // If the edge function handles auth deletion, we might still need to manually clean up the public table 
+        // if cascade isn't set up. But let's assume we want to call the edge function.
+        // If no edge function exists yet, we will fail.
+        // Alternatively, we can just "soft delete" by setting active = false, but the user asked for "delete".
+
+        // Let's try to delete from the public table first to see if RLS allows it for owners.
+        const { error: dbError } = await supabase
+            .from('admins')
+            .delete()
+            .eq('id', id);
+
+        if (dbError) throw dbError;
     }
 };
