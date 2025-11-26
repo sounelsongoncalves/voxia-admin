@@ -98,7 +98,7 @@ export const tripsRepo = {
                 destination: trip.destination,
                 driver_id: trip.driverId,
                 vehicle_id: trip.vehicleId,
-                status: 'planned',
+                status: 'Pending',
                 temp_front_c: trip.tempFront,
                 temp_rear_c: trip.tempRear,
                 job_description: trip.jobDescription,
