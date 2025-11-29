@@ -204,12 +204,12 @@ export const AdminHome: React.FC = () => {
                     zoomControl: false,
                     scrollwheel: false,
                     styles: [
-                      { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-                      { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-                      { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-                      { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
-                      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
-                      { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+                      { elementType: "geometry", stylers: [{ color: "#161A1F" }] },
+                      { elementType: "labels.text.stroke", stylers: [{ color: "#161A1F" }] },
+                      { elementType: "labels.text.fill", stylers: [{ color: "#A0A0A0" }] },
+                      { featureType: "road", elementType: "geometry", stylers: [{ color: "#2A2E35" }] },
+                      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#111418" }] },
+                      { featureType: "water", elementType: "geometry", stylers: [{ color: "#0B0D10" }] },
                     ]
                   }}
                 />

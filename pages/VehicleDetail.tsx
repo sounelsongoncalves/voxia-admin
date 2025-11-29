@@ -5,7 +5,8 @@ import { vehiclesRepo } from '../repositories/vehiclesRepo';
 import { maintenanceRepo } from '../repositories/maintenanceRepo';
 import { tripsRepo } from '../repositories/tripsRepo';
 import { locationsRepo } from '../repositories/locationsRepo';
-import { Vehicle, Status, Trip } from '../types';
+import { alertsRepo } from '../repositories/alertsRepo';
+import { Vehicle, Status, Trip, Alert } from '../types';
 import { MaintenanceHistory } from '../components/MaintenanceHistory';
 
 import { useToast } from '../components/ToastContext';
@@ -19,6 +20,7 @@ export const VehicleDetail: React.FC = () => {
   const [maintenanceRecords, setMaintenanceRecords] = useState<any[]>([]);
   const [recentTrips, setRecentTrips] = useState<Trip[]>([]);
   const [location, setLocation] = useState<any>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,17 +30,19 @@ export const VehicleDetail: React.FC = () => {
         setLoading(true);
 
         // Parallel fetching
-        const [vehicleData, maintenanceData, tripsData, locationData] = await Promise.all([
+        const [vehicleData, maintenanceData, tripsData, locationData, alertsData] = await Promise.all([
           vehiclesRepo.getVehicleById(id),
           maintenanceRepo.getMaintenanceByVehicle(id),
           tripsRepo.getTripsByVehicle(id),
-          locationsRepo.getLatestLocationByVehicle(id)
+          locationsRepo.getLatestLocationByVehicle(id),
+          alertsRepo.getAlertsByVehicle(id)
         ]);
 
         setVehicle(vehicleData);
         setMaintenanceRecords(maintenanceData);
         setRecentTrips(tripsData.slice(0, 5));
         setLocation(locationData);
+        setAlerts(alertsData);
 
       } catch (error) {
         console.error('Failed to fetch vehicle details:', error);
@@ -235,15 +239,27 @@ export const VehicleDetail: React.FC = () => {
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-txt-tertiary flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">health_and_safety</span> Saúde do Veículo
-                    </span>
-                    <span className="font-bold text-semantic-success">92%</span> {/* TODO: Real health */}
-                  </div>
-                  <div className="w-full h-3 bg-surface-3 rounded-full overflow-hidden">
-                    <div className="h-full bg-semantic-success w-[92%] rounded-full"></div>
-                  </div>
+                  {(() => {
+                    const openCritical = alerts.filter(a => !a.resolved_at && a.type === 'Critical').length;
+                    const openWarning = alerts.filter(a => !a.resolved_at && a.type === 'Warning').length;
+                    const health = Math.max(0, 100 - (openCritical * 20) - (openWarning * 5));
+                    const healthColor = health > 80 ? 'text-semantic-success' : health > 50 ? 'text-semantic-warning' : 'text-semantic-error';
+                    const barColor = health > 80 ? 'bg-semantic-success' : health > 50 ? 'bg-semantic-warning' : 'bg-semantic-error';
+
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-txt-tertiary flex items-center gap-1">
+                            <span className="material-symbols-outlined text-sm">health_and_safety</span> Saúde do Veículo
+                          </span>
+                          <span className={`font-bold ${healthColor}`}>{health}%</span>
+                        </div>
+                        <div className="w-full h-3 bg-surface-3 rounded-full overflow-hidden">
+                          <div className={`h-full ${barColor} rounded-full`} style={{ width: `${health}%` }}></div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="pt-4 border-t border-surface-border flex justify-between items-center">

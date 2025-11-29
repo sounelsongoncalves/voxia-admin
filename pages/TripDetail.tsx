@@ -76,14 +76,56 @@ export const TripDetail: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-txt-primary mb-2">Viagem {trip.id}</h1>
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-semantic-info/10 text-semantic-info border border-semantic-info/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-semantic-info"></span>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${trip.status === Status.InTransit ? 'bg-semantic-info/10 text-semantic-info border-semantic-info/20' :
+              trip.status === Status.Completed ? 'bg-semantic-success/10 text-semantic-success border-semantic-success/20' :
+                trip.status === Status.Accepted ? 'bg-brand-primary/10 text-brand-primary border-brand-primary/20' :
+                  trip.status === Status.Warning ? 'bg-semantic-warning/10 text-semantic-warning border-semantic-warning/20' :
+                    'bg-surface-3 text-txt-disabled border-surface-border'
+              }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${trip.status === Status.InTransit ? 'bg-semantic-info' :
+                trip.status === Status.Completed ? 'bg-semantic-success' :
+                  trip.status === Status.Accepted ? 'bg-brand-primary' :
+                    trip.status === Status.Warning ? 'bg-semantic-warning' :
+                      'bg-txt-disabled'
+                }`}></span>
               {trip.status}
             </span>
             <span className="text-sm text-txt-tertiary">Criada em 24/10/2024</span>
           </div>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={async () => {
+              if (window.confirm('Forçar conclusão da viagem? (Apenas para teste)')) {
+                try {
+                  await tripsRepo.updateTripStatus(trip.id, Status.Completed);
+                  setTrip({ ...trip, status: Status.Completed });
+                } catch (e) {
+                  console.error(e);
+                  alert('Erro ao concluir viagem');
+                }
+              }
+            }}
+            className="px-4 py-2 bg-semantic-warning/10 hover:bg-semantic-warning/20 border border-semantic-warning/30 text-semantic-warning rounded-lg text-sm font-medium transition-colors"
+          >
+            Concluir (Teste)
+          </button>
+          <button
+            onClick={async () => {
+              if (window.confirm('Simular aceite do motorista?')) {
+                try {
+                  await tripsRepo.updateTripStatus(trip.id, Status.Accepted);
+                  setTrip({ ...trip, status: Status.Accepted });
+                } catch (e) {
+                  console.error(e);
+                  alert('Erro ao aceitar viagem');
+                }
+              }
+            }}
+            className="px-4 py-2 bg-brand-primary/10 hover:bg-brand-primary/20 border border-brand-primary/30 text-brand-primary rounded-lg text-sm font-medium transition-colors"
+          >
+            Aceitar (Teste)
+          </button>
           <button
             onClick={() => navigate('/chat')}
             className="px-4 py-2 bg-surface-1 hover:bg-surface-2 border border-surface-border text-txt-primary rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -166,7 +208,7 @@ export const TripDetail: React.FC = () => {
           </div>
 
           {/* Resources Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Driver Card */}
             <div className="bg-surface-1 border border-surface-border rounded-xl p-6 cursor-pointer hover:border-brand-primary/50 transition-colors" onClick={() => navigate(`/drivers/${trip.driverId}`)}>
               <div className="flex justify-between items-start mb-4">
@@ -194,10 +236,26 @@ export const TripDetail: React.FC = () => {
               </div>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-surface-3 flex items-center justify-center text-brand-primary">
-                  <span className="material-symbols-outlined text-2xl">directions_truck</span>
+                  <span className="material-symbols-outlined text-2xl">local_shipping</span>
                 </div>
                 <div>
                   <p className="text-lg font-bold text-txt-primary">{trip.vehicle}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Trailer Card */}
+            <div className="bg-surface-1 border border-surface-border rounded-xl p-6 cursor-pointer hover:border-brand-primary/50 transition-colors" onClick={() => trip.trailerId && navigate(`/trailers/edit/${trip.trailerId}`)}>
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="font-bold text-txt-primary">Reboque</h3>
+                <span className="material-symbols-outlined text-txt-tertiary">local_shipping</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-surface-3 flex items-center justify-center text-brand-primary">
+                  <span className="material-symbols-outlined text-2xl">local_shipping</span>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-txt-primary">{trip.trailer || 'Nenhum'}</p>
                 </div>
               </div>
             </div>

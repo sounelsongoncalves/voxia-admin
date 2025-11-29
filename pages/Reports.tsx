@@ -5,7 +5,12 @@ import { kpiRepo } from '../repositories/kpiRepo';
 import { vehiclesRepo } from '../repositories/vehiclesRepo';
 import { Status } from '../types';
 
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/ToastContext';
+
 export const Reports: React.FC = () => {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [fuelData, setFuelData] = useState<any[]>([]);
   const [fleetStats, setFleetStats] = useState({
@@ -122,7 +127,10 @@ export const Reports: React.FC = () => {
               </button>
             ))}
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-surface-1 hover:bg-surface-2 border border-surface-border text-txt-primary text-sm font-medium rounded-lg transition-colors">
+          <button
+            onClick={() => showToast('Exportação de relatório iniciada. O download começará em breve.', 'success')}
+            className="flex items-center gap-2 px-4 py-2 bg-surface-1 hover:bg-surface-2 border border-surface-border text-txt-primary text-sm font-medium rounded-lg transition-colors"
+          >
             <span className="material-symbols-outlined text-lg">download</span>
             Exportar
           </button>
@@ -324,7 +332,10 @@ export const Reports: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="text-brand-primary hover:text-brand-hover text-xs font-medium hover:underline">
+                      <button
+                        onClick={() => navigate(`/drivers/${driver.id}`)}
+                        className="text-brand-primary hover:text-brand-hover text-xs font-medium hover:underline"
+                      >
                         Ver Detalhes
                       </button>
                     </td>

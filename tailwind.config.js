@@ -11,32 +11,32 @@ export default {
         extend: {
             colors: {
                 brand: {
-                    primary: '#2563EB', // Azul Profundo (Royal Blue) - Cor principal
-                    secondary: '#3B82F6', // Azul Claro (Action)
-                    hover: '#1D4ED8', // Azul Escuro para hover
+                    primary: '#00CC99', // Acento (Green/Teal) - Cor principal
+                    secondary: '#007AFF', // Info Blue
+                    hover: '#00A37A', // Darker Green for hover
                 },
                 bg: {
-                    main: '#101922', // Background Dark
-                    sec: '#192633', // Surface Dark
+                    main: '#0B0D10', // Background Dark
+                    sec: '#111418', // Surface Dark
                 },
                 surface: {
-                    1: '#1c2a38', // Surface Card
-                    2: '#233040', // Lighter surface
-                    3: '#2a3848', // Even lighter
-                    border: '#324d67', // Border Dark
+                    1: '#161A1F', // Surface Card
+                    2: '#2A2E35', // Lighter surface
+                    3: '#323842', // Even lighter
+                    border: '#2A2E35', // Border Dark
                 },
                 txt: {
                     primary: '#FFFFFF', // Text Primary
-                    secondary: '#92adc9', // Text Secondary
-                    tertiary: '#64748b',
-                    disabled: '#475569',
-                    inverse: '#101922',
+                    secondary: '#E0E0E0', // Text Secondary
+                    tertiary: '#A0A0A0',
+                    disabled: '#64748B',
+                    inverse: '#0B0D10',
                 },
                 semantic: {
-                    success: '#22c55e', // Success
-                    warning: '#F59E0B', // Warning
-                    error: '#EF4444', // Error
-                    info: '#3b82f6',
+                    success: '#00CC99', // Success (Same as brand)
+                    warning: '#FFC107', // Warning
+                    error: '#FF3B30', // Error
+                    info: '#007AFF', // Info
                 }
             },
             fontFamily: {

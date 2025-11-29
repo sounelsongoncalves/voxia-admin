@@ -16,11 +16,13 @@ export const tripsRepo = {
         cargo_json,
         driver_id,
         vehicle_id,
+        trailer_id,
         temp_front_c,
         temp_rear_c,
         job_description,
         driver:drivers(name),
-        vehicle:vehicles(model)
+        vehicle:vehicles(model),
+        trailer:trailers(plate)
       `)
             .order('created_at', { ascending: false });
 
@@ -32,13 +34,19 @@ export const tripsRepo = {
             destination: trip.destination,
             driver: trip.driver?.name || 'N/A',
             vehicle: trip.vehicle?.model || 'N/A',
-            status: trip.status as Status,
+            trailer: trip.trailer?.plate || 'N/A',
+            status: mapDbStatusToFrontend(trip.status),
             eta: trip.window_end ? new Date(trip.window_end).toLocaleString() : '-',
             progress: 0,
             startTime: trip.started_at ? new Date(trip.started_at).toLocaleString() : undefined,
-            cargo: trip.cargo_json || undefined,
+            cargo: trip.cargo_json ? {
+                type: trip.cargo_json.cargo_type || trip.cargo_json.type,
+                weight: trip.cargo_json.weight,
+                value: trip.cargo_json.value
+            } : undefined,
             driverId: trip.driver_id,
             vehicleId: trip.vehicle_id,
+            trailerId: trip.trailer_id,
             tempFront: trip.temp_front_c,
             tempRear: trip.temp_rear_c,
             jobDescription: trip.job_description,
@@ -58,11 +66,13 @@ export const tripsRepo = {
         cargo_json,
         driver_id,
         vehicle_id,
+        trailer_id,
         temp_front_c,
         temp_rear_c,
         job_description,
         driver:drivers(name),
-        vehicle:vehicles(model)
+        vehicle:vehicles(model),
+        trailer:trailers(plate)
       `)
             .eq('id', id)
             .single();
@@ -77,13 +87,19 @@ export const tripsRepo = {
             destination: tripData.destination,
             driver: tripData.driver?.name || 'N/A',
             vehicle: tripData.vehicle?.model || 'N/A',
-            status: tripData.status as Status,
+            trailer: tripData.trailer?.plate || 'N/A',
+            status: mapDbStatusToFrontend(tripData.status),
             eta: tripData.window_end ? new Date(tripData.window_end).toLocaleString() : '-',
             progress: 0,
             startTime: tripData.started_at ? new Date(tripData.started_at).toLocaleString() : undefined,
-            cargo: tripData.cargo_json || undefined,
+            cargo: tripData.cargo_json ? {
+                type: tripData.cargo_json.cargo_type || tripData.cargo_json.type,
+                weight: tripData.cargo_json.weight,
+                value: tripData.cargo_json.value
+            } : undefined,
             driverId: tripData.driver_id,
             vehicleId: tripData.vehicle_id,
+            trailerId: tripData.trailer_id,
             tempFront: tripData.temp_front_c,
             tempRear: tripData.temp_rear_c,
             jobDescription: tripData.job_description,
@@ -98,7 +114,8 @@ export const tripsRepo = {
                 destination: trip.destination,
                 driver_id: trip.driverId,
                 vehicle_id: trip.vehicleId,
-                status: 'Pending',
+                trailer_id: trip.trailerId,
+                status: 'assigned',
                 temp_front_c: trip.tempFront,
                 temp_rear_c: trip.tempRear,
                 job_description: trip.jobDescription,
@@ -106,7 +123,8 @@ export const tripsRepo = {
                     temp_front: trip.tempFront,
                     temp_rear: trip.tempRear,
                     description: trip.jobDescription,
-                    cargo_type: (trip as any).cargoType
+                    cargo_type: (trip as any).cargoType,
+                    trailer_id: trip.trailerId
                 }
             })
             .select()
@@ -164,9 +182,10 @@ export const tripsRepo = {
     },
 
     async updateTripStatus(id: string, status: Status) {
+        const dbStatus = mapFrontendStatusToDb(status);
         const { error } = await supabase
             .from('trips')
-            .update({ status })
+            .update({ status: dbStatus })
             .eq('id', id);
 
         if (error) throw error;
@@ -175,7 +194,7 @@ export const tripsRepo = {
     async assignTrip(tripId: string, driverId: string, vehicleId: string) {
         const { data, error } = await supabase
             .from('trips')
-            .update({ driver_id: driverId, vehicle_id: vehicleId, status: 'Pending' })
+            .update({ driver_id: driverId, vehicle_id: vehicleId, status: 'assigned' })
             .eq('id', tripId)
             .select()
             .single();
@@ -259,11 +278,15 @@ export const tripsRepo = {
             destination: trip.destination,
             driver: trip.driver?.name || 'N/A',
             vehicle: trip.vehicle?.model || 'N/A',
-            status: trip.status as Status,
+            status: mapDbStatusToFrontend(trip.status),
             eta: trip.window_end ? new Date(trip.window_end).toLocaleString() : '-',
             progress: 0,
             startTime: trip.started_at ? new Date(trip.started_at).toLocaleString() : undefined,
-            cargo: trip.cargo_json || undefined,
+            cargo: trip.cargo_json ? {
+                type: trip.cargo_json.cargo_type || trip.cargo_json.type,
+                weight: trip.cargo_json.weight,
+                value: trip.cargo_json.value
+            } : undefined,
             driverId: trip.driver_id,
             vehicleId: trip.vehicle_id,
             tempFront: trip.temp_front_c,
@@ -302,11 +325,15 @@ export const tripsRepo = {
             destination: trip.destination,
             driver: trip.driver?.name || 'N/A',
             vehicle: trip.vehicle?.model || 'N/A',
-            status: trip.status as Status,
+            status: mapDbStatusToFrontend(trip.status),
             eta: trip.window_end ? new Date(trip.window_end).toLocaleString() : '-',
             progress: 0,
             startTime: trip.started_at ? new Date(trip.started_at).toLocaleString() : undefined,
-            cargo: trip.cargo_json || undefined,
+            cargo: trip.cargo_json ? {
+                type: trip.cargo_json.cargo_type || trip.cargo_json.type,
+                weight: trip.cargo_json.weight,
+                value: trip.cargo_json.value
+            } : undefined,
             driverId: trip.driver_id,
             vehicleId: trip.vehicle_id,
             tempFront: trip.temp_front_c,
@@ -324,3 +351,29 @@ export const tripsRepo = {
         if (error) throw error;
     }
 };
+
+// Helper functions for status mapping
+function mapDbStatusToFrontend(dbStatus: string): Status {
+    switch (dbStatus) {
+        case 'planned': return Status.Pending;
+        case 'assigned': return Status.Pending;
+        case 'accepted': return Status.Accepted;
+        case 'started': return Status.Active;
+        case 'in_progress': return Status.InTransit;
+        case 'done': return Status.Completed;
+        case 'canceled': return Status.Inactive;
+        default: return Status.Pending;
+    }
+}
+
+function mapFrontendStatusToDb(status: Status): string {
+    switch (status) {
+        case Status.Pending: return 'assigned'; // Default to assigned when setting to pending
+        case Status.Accepted: return 'accepted';
+        case Status.Active: return 'started';
+        case Status.InTransit: return 'in_progress';
+        case Status.Completed: return 'done';
+        case Status.Inactive: return 'canceled';
+        default: return 'planned';
+    }
+}

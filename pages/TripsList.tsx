@@ -88,6 +88,7 @@ export const TripsList: React.FC = () => {
           >
             <option value="">Todos os Status</option>
             <option value={Status.Active}>Ativo</option>
+            <option value={Status.Accepted}>Aceita</option>
             <option value={Status.Completed}>Concluído</option>
             <option value={Status.InTransit}>Em Trânsito</option>
             <option value={Status.Warning}>Alerta</option>
@@ -126,8 +127,9 @@ export const TripsList: React.FC = () => {
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${trip.status === Status.InTransit ? 'bg-semantic-info/10 text-semantic-info border-semantic-info/20' :
                       trip.status === Status.Completed ? 'bg-semantic-success/10 text-semantic-success border-semantic-success/20' :
-                        trip.status === Status.Warning ? 'bg-semantic-warning/10 text-semantic-warning border-semantic-warning/20' :
-                          'bg-surface-3 text-txt-disabled border-surface-border'
+                        trip.status === Status.Accepted ? 'bg-brand-primary/10 text-brand-primary border-brand-primary/20' :
+                          trip.status === Status.Warning ? 'bg-semantic-warning/10 text-semantic-warning border-semantic-warning/20' :
+                            'bg-surface-3 text-txt-disabled border-surface-border'
                       }`}>
                       {trip.status}
                     </span>

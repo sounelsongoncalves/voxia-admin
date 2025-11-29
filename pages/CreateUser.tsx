@@ -37,7 +37,7 @@ export const CreateUser: React.FC = () => {
         formData.password,
         formData.phone
       );
-      navigate('/settings');
+      navigate('/users');
     } catch (err: any) {
       console.error('Failed to create user:', err);
       setError(err.message || 'Erro ao criar utilizador.');
@@ -136,7 +136,7 @@ export const CreateUser: React.FC = () => {
                   <option value="">Selecione a função...</option>
                   <option value="manager">Gestor de Frota</option>
                   <option value="operator">Operador</option>
-                  <option value="admin">Admin</option>
+                  <option value="owner">Super Admin</option>
                 </select>
               </div>
             </div>

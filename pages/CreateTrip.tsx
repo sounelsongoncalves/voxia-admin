@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { tripsRepo } from '../repositories/tripsRepo';
 import { driversRepo } from '../repositories/driversRepo';
 import { vehiclesRepo } from '../repositories/vehiclesRepo';
+import { trailersRepo, Trailer } from '../repositories/trailersRepo';
 import { Driver, Vehicle } from '../types';
 
 import { useToast } from '../components/ToastContext';
@@ -13,6 +14,7 @@ export const CreateTrip: React.FC = () => {
   const { showToast } = useToast();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [trailers, setTrailers] = useState<Trailer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -20,6 +22,7 @@ export const CreateTrip: React.FC = () => {
     destination: '',
     driver: '',
     vehicle: '',
+    trailer: '',
     cargoType: '',
     startTime: '',
     tempFront: '',
@@ -30,12 +33,14 @@ export const CreateTrip: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [driversData, vehiclesData] = await Promise.all([
+        const [driversData, vehiclesData, trailersData] = await Promise.all([
           driversRepo.getDrivers(),
-          vehiclesRepo.getVehicles()
+          vehiclesRepo.getVehicles(),
+          trailersRepo.getTrailers()
         ]);
         setDrivers(driversData);
         setVehicles(vehiclesData);
+        setTrailers(trailersData);
       } catch (err) {
         console.error('Failed to fetch data:', err);
       }
@@ -74,6 +79,7 @@ export const CreateTrip: React.FC = () => {
         destination: formData.destination,
         driverId: formData.driver,
         vehicleId: formData.vehicle,
+        trailerId: formData.trailer || undefined,
         tempFront: formData.tempFront ? Number(formData.tempFront) : undefined,
         tempRear: formData.tempRear ? Number(formData.tempRear) : undefined,
         jobDescription: formData.jobDescription,
@@ -192,6 +198,20 @@ export const CreateTrip: React.FC = () => {
                     <option value="">Selecione um veículo</option>
                     {vehicles.map(v => (
                       <option key={v.id} value={v.id}>{v.model} - {v.plate}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-txt-secondary">Reboque (Opcional)</label>
+                  <select
+                    name="trailer"
+                    value={formData.trailer}
+                    onChange={handleChange}
+                    className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
+                  >
+                    <option value="">Selecione um reboque</option>
+                    {trailers.map(t => (
+                      <option key={t.id} value={t.id}>{t.plate} ({t.type})</option>
                     ))}
                   </select>
                 </div>

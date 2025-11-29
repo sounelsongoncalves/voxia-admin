@@ -117,8 +117,8 @@ export const CreateDriver: React.FC = () => {
           showToast('✅ Motorista atualizado com sucesso!', 'success');
         } else {
           // Create Logic
-          if (!driverData.cpf || !driverData.licenseNumber) {
-            throw new Error('NIF e Carta de Condução são obrigatórios');
+          if (!driverData.licenseNumber) {
+            throw new Error('Carta de Condução é obrigatória');
           }
 
           const driverPwd = (driverData as any).password;

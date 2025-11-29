@@ -2,67 +2,67 @@ import { supabase } from '../services/supabase';
 import { ChatMessage } from '../types';
 
 export const chatRepo = {
-    async getMessages(driverId: string): Promise<ChatMessage[]> {
+    async getMessages(threadId: string): Promise<ChatMessage[]> {
         const { data, error } = await supabase
             .from('chat_messages')
             .select(`
         id,
         message,
-        created_at,
-        sender_role,
-        admin:admins(name),
-        driver:drivers(name)
+        sent_at,
+        sender_admin_id,
+        sender_driver_id
       `)
-            .eq('driver_id', driverId)
-            .order('created_at', { ascending: true });
+            .eq('thread_id', threadId)
+            .order('sent_at', { ascending: true });
 
         if (error) throw error;
 
         return data.map((msg: any) => {
-            const isMe = msg.sender_role === 'admin';
-            const senderName = isMe ? 'Você' : (msg.driver?.name || 'Motorista');
+            const isMe = !!msg.sender_admin_id;
+            const senderName = isMe ? 'Você' : 'Motorista';
 
             return {
                 id: msg.id,
                 sender: senderName,
                 text: msg.message,
-                timestamp: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date(msg.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isMe: isMe,
             };
         });
     },
 
-    async sendMessage(driverId: string, text: string) {
+    async sendMessage(threadId: string, text: string) {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error('Not authenticated');
 
         const { error } = await supabase
             .from('chat_messages')
             .insert({
-                driver_id: driverId,
-                admin_id: session.user.id,
-                sender_role: 'admin',
+                thread_id: threadId,
+                sender_admin_id: session.user.id,
+                sender_driver_id: null,
                 message: text,
+                sent_at: new Date().toISOString()
             });
 
         if (error) throw error;
     },
 
-    subscribeToMessages(driverId: string, callback: (msg: ChatMessage) => void) {
+    subscribeToMessages(threadId: string, callback: (msg: ChatMessage) => void) {
         return supabase
-            .channel(`chat-${driverId}`)
+            .channel(`chat-${threadId}`)
             .on(
                 'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `driver_id=eq.${driverId}` },
+                { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `thread_id=eq.${threadId}` },
                 async (payload) => {
                     const newMsg = payload.new as any;
-                    const isMe = newMsg.sender_role === 'admin';
+                    const isMe = !!newMsg.sender_admin_id;
 
                     callback({
                         id: newMsg.id,
                         sender: isMe ? 'Você' : 'Motorista',
                         text: newMsg.message,
-                        timestamp: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        timestamp: new Date(newMsg.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         isMe: isMe,
                     });
                 }
@@ -80,16 +80,16 @@ export const chatRepo = {
         if (error) throw error;
 
         return data.map((driver: any) => ({
-            id: driver.id,
+            id: driver.id, // This is driverId, NOT threadId yet
             name: driver.name,
             avatar: driver.avatar_url,
             status: driver.status,
-            lastMessage: 'Clique para iniciar conversa', // Placeholder, could fetch real last message
+            lastMessage: 'Clique para iniciar conversa',
             unreadCount: 0
         }));
     },
 
-    async createThread(driverId: string) {
+    async getOrCreateThread(driverId: string): Promise<string> {
         // Check if thread exists
         const { data: existing } = await supabase
             .from('chat_threads')
@@ -107,13 +107,5 @@ export const chatRepo = {
 
         if (error) throw error;
         return data.id;
-    },
-
-    async getOrCreateThread(driverId: string): Promise<string> {
-        // In this implementation, the thread ID is the driver ID.
-        // We can optionally create a record in chat_threads if needed for other logic,
-        // but for now we just return the driverId to navigate to the chat.
-        await this.createThread(driverId).catch(() => { }); // Attempt to create, ignore if fails or exists
-        return driverId;
     }
 };

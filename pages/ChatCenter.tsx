@@ -6,53 +6,72 @@ import { ChatMessage } from '../types';
 
 export const ChatCenter: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const urlThreadId = searchParams.get('threadId');
+  const urlDriverId = searchParams.get('threadId'); // URL param is likely driverId from other pages
 
-  const [threads, setThreads] = useState<any[]>([]);
-  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [drivers, setDrivers] = useState<any[]>([]); // These are drivers, acting as potential threads
+  const [activeDriverId, setActiveDriverId] = useState<string | null>(null);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageInput, setMessageInput] = useState('');
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchThreads();
+    fetchDrivers();
   }, []);
 
   useEffect(() => {
-    if (urlThreadId) {
-      setActiveThreadId(urlThreadId);
+    if (urlDriverId) {
+      setActiveDriverId(urlDriverId);
     }
-  }, [urlThreadId]);
+  }, [urlDriverId]);
 
+  // When active driver changes, get the thread ID
   useEffect(() => {
-    if (activeThreadId) {
-      fetchMessages(activeThreadId);
-      const subscription = chatRepo.subscribeToMessages(activeThreadId, (newMsg) => {
+    const initThread = async () => {
+      if (activeDriverId) {
+        try {
+          const threadId = await chatRepo.getOrCreateThread(activeDriverId);
+          setCurrentThreadId(threadId);
+        } catch (error) {
+          console.error('Failed to get/create thread:', error);
+        }
+      } else {
+        setCurrentThreadId(null);
+      }
+    };
+    initThread();
+  }, [activeDriverId]);
+
+  // When thread ID is ready, fetch messages and subscribe
+  useEffect(() => {
+    if (currentThreadId) {
+      fetchMessages(currentThreadId);
+      const subscription = chatRepo.subscribeToMessages(currentThreadId, (newMsg) => {
         setMessages(prev => [...prev, newMsg]);
       });
       return () => {
         subscription.unsubscribe();
       };
     }
-  }, [activeThreadId]);
+  }, [currentThreadId]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const fetchThreads = async () => {
+  const fetchDrivers = async () => {
     try {
       setLoading(true);
-      const data = await chatRepo.getThreads();
-      setThreads(data);
+      const data = await chatRepo.getThreads(); // This returns drivers
+      setDrivers(data);
 
-      // Only set default if no URL param and no active thread
-      if (data.length > 0 && !activeThreadId && !urlThreadId) {
-        setActiveThreadId(data[0].id);
+      // Only set default if no URL param and no active driver
+      if (data.length > 0 && !activeDriverId && !urlDriverId) {
+        setActiveDriverId(data[0].id);
       }
     } catch (error) {
-      console.error('Failed to fetch threads:', error);
+      console.error('Failed to fetch drivers:', error);
     } finally {
       setLoading(false);
     }
@@ -68,12 +87,13 @@ export const ChatCenter: React.FC = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || !activeThreadId) return;
+    if (!messageInput.trim() || !currentThreadId) return;
 
     try {
-      await chatRepo.sendMessage(activeThreadId, messageInput);
+      await chatRepo.sendMessage(currentThreadId, messageInput);
       setMessageInput('');
-      // Optimistic update or wait for subscription
+      // Optimistic update is handled by subscription usually, but we can add it here if needed
+      // For now, relying on subscription which is fast enough
     } catch (error) {
       console.error('Failed to send message:', error);
     }
@@ -83,7 +103,7 @@ export const ChatCenter: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const activeThread = threads.find(t => t.id === activeThreadId);
+  const activeDriver = drivers.find(d => d.id === activeDriverId);
 
   return (
     <div className="h-[calc(100vh-2rem)] flex bg-surface-1 border border-surface-border rounded-xl overflow-hidden">
@@ -105,32 +125,32 @@ export const ChatCenter: React.FC = () => {
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <p className="text-center text-txt-tertiary py-4">Carregando conversas...</p>
-          ) : threads.length === 0 ? (
+          ) : drivers.length === 0 ? (
             <p className="text-center text-txt-tertiary py-4">Nenhuma conversa iniciada</p>
           ) : (
-            threads.map((thread) => (
+            drivers.map((driver) => (
               <div
-                key={thread.id}
-                onClick={() => setActiveThreadId(thread.id)}
-                className={`p-4 flex gap-3 cursor-pointer border-l-4 transition-colors ${activeThreadId === thread.id
+                key={driver.id}
+                onClick={() => setActiveDriverId(driver.id)}
+                className={`p-4 flex gap-3 cursor-pointer border-l-4 transition-colors ${activeDriverId === driver.id
                   ? 'bg-surface-2 border-brand-primary'
                   : 'border-transparent hover:bg-surface-2'
                   }`}
               >
                 <div className="relative shrink-0">
                   <div className="w-12 h-12 rounded-full bg-surface-3 flex items-center justify-center text-lg font-bold text-txt-tertiary">
-                    {thread.avatar ? <img src={thread.avatar} alt={thread.name} className="w-full h-full rounded-full object-cover" /> : thread.name.charAt(0)}
+                    {driver.avatar ? <img src={driver.avatar} alt={driver.name} className="w-full h-full rounded-full object-cover" /> : driver.name.charAt(0)}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className={`text-sm font-bold truncate ${activeThreadId === thread.id ? 'text-white' : 'text-txt-secondary'}`}>
-                      {thread.name}
+                    <h3 className={`text-sm font-bold truncate ${activeDriverId === driver.id ? 'text-white' : 'text-txt-secondary'}`}>
+                      {driver.name}
                     </h3>
-                    <span className="text-xs text-txt-tertiary whitespace-nowrap">{thread.time}</span>
+                    <span className="text-xs text-txt-tertiary whitespace-nowrap">{driver.status}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <p className="text-xs text-txt-tertiary truncate max-w-[140px]">{thread.lastMessage}</p>
+                    <p className="text-xs text-txt-tertiary truncate max-w-[140px]">{driver.lastMessage}</p>
                   </div>
                 </div>
               </div>
@@ -141,18 +161,18 @@ export const ChatCenter: React.FC = () => {
 
       {/* Active Chat Area */}
       <div className="flex-1 flex flex-col bg-bg-main relative">
-        {activeThread ? (
+        {activeDriver ? (
           <>
             {/* Header */}
             <div className="h-16 border-b border-surface-border flex justify-between items-center px-6 bg-surface-3">
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full bg-surface-3 flex items-center justify-center font-bold text-txt-tertiary border border-surface-border">
-                    {activeThread.avatar ? <img src={activeThread.avatar} alt={activeThread.name} className="w-full h-full rounded-full object-cover" /> : activeThread.name.charAt(0)}
+                    {activeDriver.avatar ? <img src={activeDriver.avatar} alt={activeDriver.name} className="w-full h-full rounded-full object-cover" /> : activeDriver.name.charAt(0)}
                   </div>
                 </div>
                 <div>
-                  <h2 className="font-bold text-txt-primary">{activeThread.name}</h2>
+                  <h2 className="font-bold text-txt-primary">{activeDriver.name}</h2>
                 </div>
               </div>
             </div>

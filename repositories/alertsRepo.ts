@@ -20,6 +20,25 @@ export const alertsRepo = {
         }));
     },
 
+    async getAlertsByVehicle(vehicleId: string): Promise<Alert[]> {
+        const { data, error } = await supabase
+            .from('alerts')
+            .select('*')
+            .eq('vehicle_id', vehicleId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return data.map((a: any) => ({
+            id: a.id,
+            type: a.type as 'Critical' | 'Warning' | 'Info',
+            message: a.message,
+            timestamp: new Date(a.created_at).toLocaleString(),
+            vehicleId: a.vehicle_id,
+            resolved_at: a.resolved_at,
+        }));
+    },
+
     async resolveAlert(id: string) {
         const { error } = await supabase
             .from('alerts')

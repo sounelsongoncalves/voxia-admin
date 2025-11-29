@@ -26,8 +26,8 @@ export const vehiclesRepo = {
             id: v.id,
             plate: v.plate,
             model: v.model || v.description || 'Modelo Desconhecido',
-            status: (v.status as Status) || (v.active ? Status.Active : Status.Inactive),
-            location: 'Desconhecida', // TODO: Join with latest location view if available
+            status: mapDbStatusToFrontend(v.status),
+            location: 'Desconhecida', // Location is fetched separately in VehicleDetail
             fuel: v.fuel_level || 0,
             driverId: v.driver_id,
             manufacturer: v.manufacturer,
@@ -50,7 +50,7 @@ export const vehiclesRepo = {
             id: data.id,
             plate: data.plate,
             model: data.model || data.description || 'Modelo Desconhecido',
-            status: (data.status as Status) || (data.active ? Status.Active : Status.Inactive),
+            status: mapDbStatusToFrontend(data.status),
             location: 'Desconhecida',
             fuel: data.fuel_level || 0,
             driverId: data.driver_id,
@@ -71,7 +71,7 @@ export const vehiclesRepo = {
                 year: vehicle.year,
                 type: vehicle.type,
                 fuel_level: vehicle.fuel,
-                status: vehicle.status,
+                status: mapFrontendStatusToDb(vehicle.status as Status),
                 active: vehicle.status === Status.Active,
             })
             .select()
@@ -91,7 +91,7 @@ export const vehiclesRepo = {
                 year: updates.year,
                 type: updates.type,
                 fuel_level: updates.fuel,
-                status: updates.status,
+                status: updates.status ? mapFrontendStatusToDb(updates.status as Status) : undefined,
                 active: updates.status === Status.Active,
                 driver_id: updates.driverId,
             })
@@ -106,6 +106,31 @@ export const vehiclesRepo = {
             .delete()
             .eq('id', id);
 
-        if (error) throw error;
+        if (error) {
+            if (error.code === '23503') {
+                throw new Error('Não é possível excluir este veículo pois ele está associado a viagens ou motoristas.');
+            }
+            throw error;
+        }
     }
 };
+
+function mapDbStatusToFrontend(dbStatus: string): Status {
+    switch (dbStatus) {
+        case 'active': return Status.Active;
+        case 'inactive': return Status.Inactive;
+        case 'maintenance': return Status.Error;
+        case 'in_transit': return Status.InTransit;
+        default: return Status.Inactive;
+    }
+}
+
+function mapFrontendStatusToDb(status: Status): string {
+    switch (status) {
+        case Status.Active: return 'active';
+        case Status.Inactive: return 'inactive';
+        case Status.Error: return 'maintenance';
+        case Status.InTransit: return 'in_transit';
+        default: return 'inactive';
+    }
+}

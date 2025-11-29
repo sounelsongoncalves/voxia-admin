@@ -288,7 +288,7 @@ export const Alerts: React.FC = () => {
                   </button>
                   <button
                     onClick={() => toggleContext(alert.id)}
-                    className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 text-white text-sm font-medium leading-normal transition-colors ${isContextOpen ? 'bg-surface-3' : 'bg-[#324d67] hover:bg-primary'}`}
+                    className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 text-white text-sm font-medium leading-normal transition-colors ${isContextOpen ? 'bg-surface-3' : 'bg-surface-2 hover:bg-brand-primary'}`}
                   >
                     <span className="truncate">{isContextOpen ? 'Fechar Contexto' : 'Abrir Contexto'}</span>
                   </button>
@@ -297,22 +297,22 @@ export const Alerts: React.FC = () => {
 
               {/* Context Panel */}
               {isContextOpen && (
-                <div className="p-6 bg-[#24282F] rounded-xl border border-primary/50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <h3 className="text-xl font-bold text-white mb-1">Contexto do Alerta</h3>
-                  <p className="text-[#92adc9] text-sm mb-4">ID: {alert.id} | Status: Pendente</p>
+                <div className="p-6 bg-surface-2 rounded-xl border border-brand-primary/50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <h3 className="text-xl font-bold text-txt-primary mb-1">Contexto do Alerta</h3>
+                  <p className="text-txt-secondary text-sm mb-4">ID: {alert.id} | Status: Pendente</p>
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="flex-1">
-                      <h4 className="text-white font-semibold mb-2">Detalhes Operacionais</h4>
+                      <h4 className="text-txt-primary font-semibold mb-2">Detalhes Operacionais</h4>
                       <div className="space-y-2">
-                        <p className="text-[#92adc9] text-sm"><span className="font-medium text-white/80">Ocorrência:</span> {alert.message}</p>
-                        <p className="text-[#92adc9] text-sm"><span className="font-medium text-white/80">Veículo:</span> {alert.vehicleId || 'N/A'}</p>
-                        <p className="text-yellow-400 text-sm mt-2 bg-yellow-400/10 p-2 rounded border border-yellow-400/20">
+                        <p className="text-txt-secondary text-sm"><span className="font-medium text-txt-primary/80">Ocorrência:</span> {alert.message}</p>
+                        <p className="text-txt-secondary text-sm"><span className="font-medium text-txt-primary/80">Veículo:</span> {alert.vehicleId || 'N/A'}</p>
+                        <p className="text-semantic-warning text-sm mt-2 bg-semantic-warning/10 p-2 rounded border border-semantic-warning/20">
                           <span className="font-bold">Sugestão IA:</span> Verifique o histórico de manutenção recente deste veículo.
                         </p>
                       </div>
                       <button
                         onClick={() => handleResolve(alert.id)}
-                        className="mt-4 flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold leading-normal hover:bg-brand-hover transition-colors"
+                        className="mt-4 flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-brand-primary text-white text-sm font-bold leading-normal hover:bg-brand-hover transition-colors"
                       >
                         <span className="truncate">Marcar como Resolvido</span>
                       </button>

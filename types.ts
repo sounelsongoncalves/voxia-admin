@@ -2,6 +2,7 @@ export enum Status {
   Active = 'Ativo',
   Inactive = 'Inativo',
   Pending = 'Pendente',
+  Accepted = 'Aceita',
   Error = 'Erro',
   Warning = 'Alerta',
   Completed = 'Concluído',
@@ -19,6 +20,8 @@ export interface Trip {
   progress: number;
   driverId?: string;
   vehicleId?: string;
+  trailerId?: string;
+  trailer?: string;
   startTime?: string;
   tempFront?: number;
   tempRear?: number;
