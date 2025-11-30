@@ -281,72 +281,118 @@ export const TripDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Sidebar Map / Timeline */}
-        <div className="lg:col-span-1 space-y-6">
-          <div
-            className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden h-80 flex flex-col cursor-pointer hover:border-brand-primary transition-colors"
-            onClick={() => navigate('/map')}
-          >
-            <div className="p-4 border-b border-surface-border bg-surface-3 flex justify-between items-center">
-              <h3 className="font-bold text-txt-primary">Mapa</h3>
-              <span className="text-xs text-brand-primary hover:underline">Expandir</span>
+        {/* Trip Gallery */}
+        <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
+          <h3 className="font-bold text-txt-primary mb-4 flex items-center gap-2">
+            <span className="material-symbols-outlined text-brand-primary">photo_library</span>
+            Galeria da Viagem
+          </h3>
+          {events.filter(e => e.metadata?.photo_url).length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {events.filter(e => e.metadata?.photo_url).map((event) => (
+                <div
+                  key={event.id}
+                  className="group relative aspect-square rounded-lg overflow-hidden border border-surface-border cursor-pointer"
+                  onClick={() => window.open(event.metadata.photo_url, '_blank')}
+                >
+                  <img
+                    src={event.metadata.photo_url}
+                    alt={event.event_type}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white">visibility</span>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-2 text-xs text-white truncate">
+                    {event.description || event.event_type}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex-1 relative bg-bg-sec">
-              {/* Static Map Placeholder */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: `
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-txt-tertiary border-2 border-dashed border-surface-border rounded-lg">
+              <span className="material-symbols-outlined text-4xl mb-2">no_photography</span>
+              <p>Nenhuma foto registrada nesta viagem</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sidebar Map / Timeline */}
+      <div className="lg:col-span-1 space-y-6">
+        <div
+          className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden h-80 flex flex-col cursor-pointer hover:border-brand-primary transition-colors"
+          onClick={() => navigate('/map')}
+        >
+          <div className="p-4 border-b border-surface-border bg-surface-3 flex justify-between items-center">
+            <h3 className="font-bold text-txt-primary">Mapa</h3>
+            <span className="text-xs text-brand-primary hover:underline">Expandir</span>
+          </div>
+          <div className="flex-1 relative bg-bg-sec">
+            {/* Static Map Placeholder */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `
                     radial-gradient(#2A2E35 1px, transparent 1px),
                     linear-gradient(to right, rgba(42, 46, 53, 0.1) 1px, transparent 1px),
                     linear-gradient(to bottom, rgba(42, 46, 53, 0.1) 1px, transparent 1px)
                   `,
-                  backgroundSize: '20px 20px, 40px 40px, 40px 40px'
-                }}
-              ></div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                <div className="w-4 h-4 bg-brand-primary rounded-full shadow-[0_0_15px_rgba(0,204,153,0.5)] animate-pulse"></div>
-                <div className="bg-surface-1/90 backdrop-blur px-3 py-1 rounded-lg mt-2 text-xs font-bold text-txt-primary border border-surface-border">
-                  Em Trânsito
-                </div>
+                backgroundSize: '20px 20px, 40px 40px, 40px 40px'
+              }}
+            ></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+              <div className="w-4 h-4 bg-brand-primary rounded-full shadow-[0_0_15px_rgba(0,204,153,0.5)] animate-pulse"></div>
+              <div className="bg-surface-1/90 backdrop-blur px-3 py-1 rounded-lg mt-2 text-xs font-bold text-txt-primary border border-surface-border">
+                Em Trânsito
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
-            <h3 className="font-bold text-txt-primary mb-4">Timeline de Eventos</h3>
-            <div className="space-y-6">
-              {events.length === 0 ? (
-                <p className="text-sm text-txt-tertiary">Nenhum evento registrado</p>
-              ) : (
-                events.map((event, index) => (
-                  <div key={event.id} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-2 h-2 rounded-full ${index === 0 ? 'bg-brand-primary' : 'bg-txt-tertiary'}`}></div>
-                      {index < events.length - 1 && <div className="w-0.5 h-full bg-surface-3 my-1"></div>}
-                    </div>
-                    <div className="pb-1">
-                      <p className="text-xs text-txt-tertiary">
-                        {new Date(event.timestamp).toLocaleString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                      <p className="text-sm font-medium text-txt-primary">
-                        {event.description || event.event_type}
-                      </p>
-                      {event.location && (
-                        <p className="text-xs text-txt-tertiary mt-1">
-                          {event.location.lat.toFixed(4)}, {event.location.lng.toFixed(4)}
-                        </p>
-                      )}
-                    </div>
+        <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
+          <h3 className="font-bold text-txt-primary mb-4">Timeline de Eventos</h3>
+          <div className="space-y-6">
+            {events.length === 0 ? (
+              <p className="text-sm text-txt-tertiary">Nenhum evento registrado</p>
+            ) : (
+              events.map((event, index) => (
+                <div key={event.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-2 h-2 rounded-full ${index === 0 ? 'bg-brand-primary' : 'bg-txt-tertiary'}`}></div>
+                    {index < events.length - 1 && <div className="w-0.5 h-full bg-surface-3 my-1"></div>}
                   </div>
-                ))
-              )}
-            </div>
+                  <div className="pb-1 flex-1">
+                    <p className="text-xs text-txt-tertiary">
+                      {new Date(event.timestamp).toLocaleString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                    <p className="text-sm font-medium text-txt-primary">
+                      {event.description || event.event_type}
+                    </p>
+                    {event.location && (
+                      <p className="text-xs text-txt-tertiary mt-1">
+                        {event.location.lat.toFixed(4)}, {event.location.lng.toFixed(4)}
+                      </p>
+                    )}
+                    {event.metadata?.photo_url && (
+                      <div className="mt-2">
+                        <img
+                          src={event.metadata.photo_url}
+                          alt="Comprovante"
+                          className="w-24 h-24 object-cover rounded-lg border border-surface-border cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => window.open(event.metadata.photo_url, '_blank')}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -9,19 +9,21 @@ export interface AISettings {
 export const aiSettingsRepo = {
     async getSettings(): Promise<AISettings | null> {
         const { data, error } = await supabase
-            .from('ai_settings')
-            .select('provider, model, api_key_encrypted')
+            .rpc('get_ai_config')
             .single();
 
         if (error) {
             if (error.code === 'PGRST116') return null; // Not found
-            throw error;
+            console.error('Error fetching AI settings:', error);
+            return null;
         }
 
+        const settings = data as { provider: string; model: string; has_key: boolean };
+
         return {
-            provider: data.provider as 'google' | 'openai',
-            model: data.model,
-            hasKey: !!data.api_key_encrypted
+            provider: settings.provider as 'google' | 'openai',
+            model: settings.model,
+            hasKey: settings.has_key
         };
     },
 

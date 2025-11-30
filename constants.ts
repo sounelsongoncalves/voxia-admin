@@ -15,5 +15,5 @@ export const MENU_ITEMS: MenuItem[] = [
     { label: 'Utilizadores', path: '/users', icon: 'group' },
     { label: 'Alertas', path: '/alerts', icon: 'warning' },
     { label: 'Relatórios', path: '/reports', icon: 'insights' },
-    { label: 'Configurações', path: '/settings', icon: 'settings' },
+    { label: 'Gestor de Arquivos', path: '/files', icon: 'folder' },
 ];

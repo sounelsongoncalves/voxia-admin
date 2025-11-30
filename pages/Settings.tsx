@@ -1,137 +1,161 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { settingsRepo, SystemPreferences } from '../repositories/settingsRepo';
 import { adminsRepo } from '../repositories/adminsRepo';
+import { appSettingsRepo, AppSettings } from '../repositories/appSettingsRepo';
 import { Admin } from '../types';
 import { useToast } from '../components/ToastContext';
+import { useUser } from '../components/UserContext';
+import { useAppSettings } from '../components/AppSettingsContext';
 
 interface SettingsProps {
-  initialTab?: 'general' | 'users' | 'profile';
+  initialTab?: 'general' | 'profile' | 'security' | 'users';
 }
 
-export const Settings: React.FC<SettingsProps> = ({ initialTab = 'general' }) => {
+export const Settings: React.FC<SettingsProps> = ({ initialTab = 'profile' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
-  const [prefs, setPrefs] = useState<SystemPreferences | null>(null);
+  const { user: currentUser, loading: userLoading, refreshUser } = useUser();
+  const { settings: appSettings, refreshSettings } = useAppSettings();
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+
   const [admins, setAdmins] = useState<Admin[]>([]);
-  const [currentUser, setCurrentUser] = useState<Admin | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'general' | 'users' | 'profile'>(initialTab);
+  const [loadingAdmins, setLoadingAdmins] = useState(true);
+
+  // General Settings Form State
+  const [generalForm, setGeneralForm] = useState({
+    orgName: '',
+    primaryColor: '#000000',
+    supportEmail: '',
+    supportPhone: '',
+  });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Profile Form State
-  const [profileForm, setProfileForm] = useState({ name: '', phone: '', password: '', confirmPassword: '' });
+  const [profileForm, setProfileForm] = useState({
+    firstName: '',
+    userName: '',
+    email: '',
+    phone: '',
+    country: 'Portugal',
+    address: '',
+    city: '',
+    postalCode: '',
+  });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Security Form State
+  const [securityForm, setSecurityForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
   useEffect(() => {
-    fetchData();
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  useEffect(() => {
+    fetchAdmins();
   }, []);
 
-  const fetchData = async () => {
+  useEffect(() => {
+    if (currentUser) {
+      setProfileForm(prev => ({
+        ...prev,
+        firstName: currentUser.name,
+        email: currentUser.email,
+        phone: currentUser.phone || '',
+        userName: currentUser.email.split('@')[0],
+      }));
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (appSettings) {
+      setGeneralForm({
+        orgName: appSettings.org_name || '',
+        primaryColor: appSettings.primary_color || '#000000',
+        supportEmail: appSettings.support_email || '',
+        supportPhone: appSettings.support_phone || '',
+      });
+    }
+  }, [appSettings]);
+
+  const fetchAdmins = async () => {
     try {
-      const [prefsData, adminsData, currentUserData] = await Promise.all([
-        settingsRepo.getPreferences(),
-        adminsRepo.getAdmins(),
-        adminsRepo.getCurrentAdmin()
-      ]);
-      setPrefs(prefsData);
+      const adminsData = await adminsRepo.getAdmins();
       setAdmins(adminsData);
-      setCurrentUser(currentUserData);
-      if (currentUserData) {
-        setProfileForm(prev => ({ ...prev, name: currentUserData.name, phone: currentUserData.phone || '' }));
-      }
     } catch (error) {
-      console.error('Error fetching settings data:', error);
+      console.error('Error fetching admins:', error);
     } finally {
-      setLoading(false);
+      setLoadingAdmins(false);
     }
   };
 
-  const handleToggle = async (key: keyof SystemPreferences) => {
-    if (!prefs) return;
-    const newValue = !prefs[key];
-    setPrefs({ ...prefs, [key]: newValue }); // Optimistic
+  const handleGeneralUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await settingsRepo.updatePreferences({ [key]: newValue });
-    } catch (error) {
-      console.error('Error updating preference:', error);
-      setPrefs({ ...prefs, [key]: !newValue }); // Revert
-    }
-  };
+      let logoUrl = appSettings?.logo_url;
+      if (logoFile) {
+        logoUrl = await appSettingsRepo.uploadLogo(logoFile);
+      }
 
-  const handleRoleChange = async (id: string, newRole: 'owner' | 'manager' | 'operator') => {
-    try {
-      await adminsRepo.updateAdminRole(id, newRole);
-      setAdmins(admins.map(a => a.id === id ? { ...a, role: newRole } : a));
-    } catch (error) {
-      showToast('Erro ao atualizar função.', 'error');
-    }
-  };
+      await appSettingsRepo.updateSettings({
+        org_name: generalForm.orgName,
+        primary_color: generalForm.primaryColor,
+        support_email: generalForm.supportEmail,
+        support_phone: generalForm.supportPhone,
+        logo_url: logoUrl,
+      });
 
-  const handleStatusToggle = async (id: string, currentStatus: string) => {
-    const isActive = currentStatus === 'Ativo';
-    try {
-      await adminsRepo.toggleAdminStatus(id, !isActive);
-      setAdmins(admins.map(a => a.id === id ? { ...a, status: !isActive ? 'Ativo' : 'Inativo', active: !isActive } : a));
-    } catch (error) {
-      showToast('Erro ao atualizar status.', 'error');
-    }
-  };
-
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este usuário permanentemente?')) return;
-
-    try {
-      await adminsRepo.deleteAdmin(id);
-      setAdmins(admins.filter(a => a.id !== id));
-      showToast('Usuário excluído com sucesso.', 'success');
+      await refreshSettings();
+      showToast('Configurações gerais atualizadas com sucesso!', 'success');
     } catch (error: any) {
-      console.error('Error deleting user:', error);
-      showToast('Erro ao excluir usuário: ' + (error.message || 'Erro desconhecido'), 'error');
+      showToast('Erro ao atualizar configurações: ' + error.message, 'error');
     }
   };
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
-    setProfileLoading(true);
 
     try {
       let avatarUrl = currentUser.avatar_url;
-
       if (avatarFile) {
         avatarUrl = await adminsRepo.uploadAvatar(avatarFile, currentUser.id);
       }
 
       await adminsRepo.updateProfile(currentUser.id, {
-        name: profileForm.name,
+        name: profileForm.firstName,
         phone: profileForm.phone,
         avatar_url: avatarUrl
       });
 
-      if (profileForm.password) {
-        if (profileForm.password !== profileForm.confirmPassword) {
-          showToast('As senhas não coincidem.', 'error');
-          setProfileLoading(false);
-          return;
-        }
-        await adminsRepo.updatePassword(profileForm.password);
-      }
-
+      await refreshUser(); // Update global user context
       showToast('Perfil atualizado com sucesso!', 'success');
-      fetchData(); // Refresh data
-      setProfileForm(prev => ({ ...prev, password: '', confirmPassword: '' }));
     } catch (error: any) {
-      console.error('Error updating profile:', error);
       showToast('Erro ao atualizar perfil: ' + error.message, 'error');
-    } finally {
-      setProfileLoading(false);
     }
   };
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+  const handlePasswordUpdate = async () => {
+    if (securityForm.newPassword !== securityForm.confirmPassword) {
+      showToast('As senhas não coincidem.', 'error');
+      return;
+    }
+    try {
+      await adminsRepo.updatePassword(securityForm.newPassword);
+      showToast('Senha atualizada com sucesso!', 'success');
+      setSecurityForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      showToast('Erro ao atualizar senha: ' + error.message, 'error');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,242 +164,404 @@ export const Settings: React.FC<SettingsProps> = ({ initialTab = 'general' }) =>
     }
   };
 
-  if (loading) {
-    return <div className="p-8 text-center text-txt-tertiary">Carregando configurações...</div>;
-  }
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setLogoFile(e.target.files[0]);
+    }
+  };
+
+  const menuItems = [
+    { id: 'general', label: 'Geral', icon: 'settings' },
+    { id: 'profile', label: 'Perfil', icon: 'person' },
+    { id: 'security', label: 'Segurança', icon: 'lock' },
+    { id: 'users', label: 'Utilizadores', icon: 'group' },
+  ];
+
+  if (userLoading || loadingAdmins) return <div className="p-8 text-center">Carregando...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-txt-primary">Configurações</h1>
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+      <h1 className="text-2xl font-bold mb-6 text-txt-primary">Configurações</h1>
 
-      {/* Tabs */}
-      <div className="flex border-b border-surface-border">
-        <button
-          onClick={() => setActiveTab('general')}
-          className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'general' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-txt-tertiary hover:text-txt-primary'}`}
-        >
-          Geral
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'users' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-txt-tertiary hover:text-txt-primary'}`}
-        >
-          Gestão de Utilizadores
-        </button>
-        <button
-          onClick={() => setActiveTab('profile')}
-          className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'profile' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-txt-tertiary hover:text-txt-primary'}`}
-        >
-          Meu Perfil
-        </button>
-      </div>
+      <div className="flex flex-col md:flex-row bg-surface-1 rounded-2xl overflow-hidden border border-surface-border min-h-[600px] shadow-sm">
+        {/* Sidebar */}
+        <aside className="w-full md:w-64 flex-shrink-0 p-4 md:p-6 bg-surface-1">
+          <nav className="space-y-2 flex flex-row md:flex-col overflow-x-auto md:overflow-visible pb-2 md:pb-0 gap-2 md:gap-0">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex-shrink-0 w-auto md:w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === item.id
+                  ? 'bg-surface-2 text-txt-primary shadow-sm'
+                  : 'text-txt-tertiary hover:text-txt-primary hover:bg-surface-2/50'
+                  }`}
+              >
+                <span className={`material-symbols-outlined text-[20px] ${activeTab === item.id ? 'text-brand-primary' : ''}`}>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-      {/* General Settings */}
-      {activeTab === 'general' && (
-        <div className="space-y-6">
-          <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-txt-primary mb-4 border-b border-surface-border pb-2">Perfil da Organização</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-txt-tertiary mb-2">Nome da Empresa</label>
-                <input type="text" value="Voxia Logística" className="w-full bg-surface-1 border border-surface-border rounded-lg px-4 py-2 text-txt-primary focus:border-brand-primary outline-none" readOnly />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-txt-tertiary mb-2">Email do Admin</label>
-                <input type="email" value="admin@voxia.com" className="w-full bg-surface-1 border border-surface-border rounded-lg px-4 py-2 text-txt-primary focus:border-brand-primary outline-none" readOnly />
-              </div>
-            </div>
-          </div>
+        {/* Main Content */}
+        <main className="flex-1 p-6 md:p-10 bg-surface-1">
+          {/* General Tab */}
+          {activeTab === 'general' && (
+            <div className="max-w-4xl animate-fade-in">
+              <h2 className="text-xl font-bold mb-8 text-txt-primary">Configurações Gerais</h2>
 
-          <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-txt-primary mb-4 border-b border-surface-border pb-2">Preferências do Sistema</h2>
-            <div className="space-y-4">
-              {[
-                { key: 'dark_mode', label: 'Modo Escuro', desc: 'Forçar tema escuro em todas as contas' },
-                { key: 'realtime_notifications', label: 'Notificações em Tempo Real', desc: 'Receber alertas críticos' },
-                { key: 'copilot_auto_analysis', label: 'Auto-Análise do Copiloto IA', desc: 'IA busca melhorias proativamente' }
-              ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-txt-primary font-medium">{item.label}</p>
-                    <p className="text-sm text-txt-tertiary">{item.desc}</p>
+              {/* Logo Section */}
+              <div className="flex items-center gap-6 mb-10">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-lg overflow-hidden ring-4 ring-surface-2 bg-surface-2 flex items-center justify-center">
+                    {logoFile ? (
+                      <img src={URL.createObjectURL(logoFile)} alt="Logo Preview" className="w-full h-full object-contain" />
+                    ) : appSettings?.logo_url ? (
+                      <img src={appSettings.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                    ) : (
+                      <span className="material-symbols-outlined text-4xl text-txt-tertiary">business</span>
+                    )}
                   </div>
+                </div>
+                <div className="flex gap-3">
                   <button
-                    onClick={() => handleToggle(item.key as keyof SystemPreferences)}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${prefs?.[item.key as keyof SystemPreferences] ? 'bg-brand-primary' : 'bg-surface-3'}`}
+                    onClick={() => logoInputRef.current?.click()}
+                    className="px-4 py-2 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-brand-hover transition-colors shadow-lg shadow-brand-primary/20"
                   >
-                    <div className={`w-4 h-4 rounded-full absolute top-1 transition-all ${prefs?.[item.key as keyof SystemPreferences] ? 'bg-bg-main right-1' : 'bg-txt-tertiary left-1'}`}></div>
+                    Alterar Logo
+                  </button>
+                  <button
+                    onClick={() => setLogoFile(null)}
+                    className="px-4 py-2 bg-surface-2 text-txt-primary text-sm font-medium rounded-lg hover:bg-surface-3 transition-colors"
+                  >
+                    Remover
+                  </button>
+                  <input type="file" ref={logoInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
+                </div>
+              </div>
+
+              {/* Form */}
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Nome da Organização</label>
+                    <input
+                      type="text"
+                      value={generalForm.orgName}
+                      onChange={(e) => setGeneralForm({ ...generalForm, orgName: e.target.value })}
+                      className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Cor Primária</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={generalForm.primaryColor}
+                        onChange={(e) => setGeneralForm({ ...generalForm, primaryColor: e.target.value })}
+                        className="h-12 w-12 rounded-lg border-none cursor-pointer bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={generalForm.primaryColor}
+                        onChange={(e) => setGeneralForm({ ...generalForm, primaryColor: e.target.value })}
+                        className="flex-1 bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all uppercase"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Email de Suporte</label>
+                    <input
+                      type="email"
+                      value={generalForm.supportEmail}
+                      onChange={(e) => setGeneralForm({ ...generalForm, supportEmail: e.target.value })}
+                      className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Telefone de Suporte</label>
+                    <input
+                      type="text"
+                      value={generalForm.supportPhone}
+                      onChange={(e) => setGeneralForm({ ...generalForm, supportPhone: e.target.value })}
+                      className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={handleGeneralUpdate}
+                    className="px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-hover transition-all shadow-lg shadow-brand-primary/20"
+                  >
+                    Guardar Alterações
                   </button>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* User Management */}
-      {activeTab === 'users' && (
-        <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
-          <div className="flex justify-between items-center mb-4 border-b border-surface-border pb-2">
-            <h2 className="text-lg font-semibold text-txt-primary">Gestão de Utilizadores (RBAC)</h2>
-            <button
-              onClick={() => navigate('/settings/users/create')}
-              className="px-4 py-2 bg-brand-primary text-bg-main rounded-lg text-sm font-bold hover:bg-brand-hover transition-colors"
-            >
-              Adicionar Utilizador
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-txt-tertiary border-b border-surface-border">
-                  <th className="pb-2 px-4">Utilizador</th>
-                  <th className="pb-2 px-4">Função</th>
-                  <th className="pb-2 px-4">Status</th>
-                  <th className="pb-2 px-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-border">
-                {admins.map((admin) => (
-                  <tr key={admin.id} className="hover:bg-surface-2 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        {admin.avatar_url ? (
-                          <img src={admin.avatar_url} alt={admin.name} className="w-8 h-8 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-surface-3 flex items-center justify-center text-txt-tertiary">
-                            <span className="material-symbols-outlined text-sm">person</span>
-                          </div>
-                        )}
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="max-w-4xl animate-fade-in">
+              <h2 className="text-xl font-bold mb-8 text-txt-primary">Informações Pessoais</h2>
+
+              {/* Avatar Section */}
+              <div className="flex items-center gap-6 mb-10">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-surface-2">
+                    <img
+                      src={avatarFile ? URL.createObjectURL(avatarFile) : currentUser?.avatar_url || 'https://i.pravatar.cc/150?u=admin'}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-brand-hover transition-colors shadow-lg shadow-brand-primary/20"
+                  >
+                    Carregar Imagem
+                  </button>
+                  <button
+                    onClick={() => setAvatarFile(null)}
+                    className="px-4 py-2 bg-surface-2 text-txt-primary text-sm font-medium rounded-lg hover:bg-surface-3 transition-colors"
+                  >
+                    Remover
+                  </button>
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                </div>
+              </div>
+
+              {/* Form */}
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Primeiro Nome</label>
+                    <input
+                      type="text"
+                      value={profileForm.firstName}
+                      onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                      className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Nome de Utilizador</label>
+                    <input
+                      type="text"
+                      value={profileForm.userName}
+                      onChange={(e) => setProfileForm({ ...profileForm, userName: e.target.value })}
+                      className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Email</label>
+                  <input
+                    type="email"
+                    value={profileForm.email}
+                    readOnly
+                    className="w-full bg-surface-2/50 border-none rounded-lg px-4 py-3 text-txt-tertiary cursor-not-allowed"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Telemóvel</label>
+                  <div className="flex gap-2">
+                    <div className="bg-surface-2 rounded-lg px-4 py-3 flex items-center gap-2 min-w-[100px]">
+                      <span className="text-lg">🇵🇹</span>
+                      <span className="text-sm text-txt-secondary">+351</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                      className="flex-1 bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-surface-border/50">
+                  <h3 className="text-lg font-bold mb-6 text-txt-primary">Informações de Morada</h3>
+
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">País</label>
+                      <div className="relative">
+                        <select
+                          value={profileForm.country}
+                          onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })}
+                          className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary appearance-none focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                        >
+                          <option value="Portugal">Portugal</option>
+                          <option value="Spain">Espanha</option>
+                          <option value="United States">Estados Unidos</option>
+                          <option value="Brazil">Brasil</option>
+                        </select>
+                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-txt-tertiary pointer-events-none">expand_more</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Morada</label>
+                      <input
+                        type="text"
+                        value={profileForm.address}
+                        onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
+                        className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Cidade</label>
+                        <input
+                          type="text"
+                          value={profileForm.city}
+                          onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                          className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Código Postal</label>
+                        <input
+                          type="text"
+                          value={profileForm.postalCode}
+                          onChange={(e) => setProfileForm({ ...profileForm, postalCode: e.target.value })}
+                          className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={handleProfileUpdate}
+                    className="px-8 py-3 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-hover transition-all shadow-lg shadow-brand-primary/20"
+                  >
+                    Guardar Alterações
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Security Tab */}
+          {activeTab === 'security' && (
+            <div className="max-w-4xl animate-fade-in space-y-10">
+              <div>
+                <h2 className="text-xl font-bold mb-2 text-txt-primary">Segurança</h2>
+                <p className="text-sm text-txt-tertiary mb-8">Gerencie suas preferências de segurança e senha.</p>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Palavra-passe Atual</label>
+                    <input
+                      type="password"
+                      value={securityForm.currentPassword}
+                      onChange={(e) => setSecurityForm({ ...securityForm, currentPassword: e.target.value })}
+                      className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Nova Palavra-passe</label>
+                      <input
+                        type="password"
+                        value={securityForm.newPassword}
+                        onChange={(e) => setSecurityForm({ ...securityForm, newPassword: e.target.value })}
+                        className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-txt-tertiary uppercase tracking-wide">Confirmar Nova Palavra-passe</label>
+                      <input
+                        type="password"
+                        value={securityForm.confirmPassword}
+                        onChange={(e) => setSecurityForm({ ...securityForm, confirmPassword: e.target.value })}
+                        className="w-full bg-surface-2 border-none rounded-lg px-4 py-3 text-txt-primary placeholder-txt-tertiary focus:ring-2 focus:ring-brand-primary/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handlePasswordUpdate}
+                      className="px-6 py-2.5 bg-brand-primary text-white font-bold rounded-lg hover:bg-brand-hover transition-colors shadow-lg shadow-brand-primary/20"
+                    >
+                      Atualizar Senha
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8 border-t border-surface-border/50">
+                <h3 className="text-lg font-bold mb-6 text-txt-primary">Verificação em 2 Passos</h3>
+                <div className="space-y-4">
+                  {/* 2FA Items */}
+                  {[
+                    { title: 'Google Authenticator', desc: 'Usar a app Google Authenticator.', icon: 'lock', active: true },
+                    { title: 'Okta Verify', desc: 'Notificações push da app Okta.', icon: 'verified_user', active: false },
+                    { title: 'Email', desc: 'Códigos enviados por email.', icon: 'mail', active: false },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 bg-surface-2 rounded-xl border border-transparent hover:border-surface-border transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${item.active ? 'bg-brand-primary/10 text-brand-primary' : 'bg-surface-3 text-txt-tertiary'}`}>
+                          <span className="material-symbols-outlined">{item.icon}</span>
+                        </div>
                         <div>
-                          <p className="text-txt-primary font-medium">{admin.name}</p>
-                          <p className="text-xs text-txt-tertiary">{admin.email}</p>
+                          <p className="font-bold text-txt-primary text-sm">{item.title}</p>
+                          <p className="text-xs text-txt-tertiary">{item.desc}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <select
-                        value={admin.role}
-                        onChange={(e) => handleRoleChange(admin.id, e.target.value as any)}
-                        disabled={currentUser?.role !== 'owner' && currentUser?.role !== 'manager'}
-                        className="bg-surface-2 border border-surface-border rounded px-2 py-1 text-xs text-txt-primary outline-none focus:border-brand-primary"
-                      >
-                        <option value="owner">Super Admin</option>
-                        <option value="manager">Gestor</option>
-                        <option value="operator">Operador</option>
-                      </select>
-                    </td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleStatusToggle(admin.id, admin.status || 'Ativo')}
-                        className={`px-2 py-0.5 rounded text-xs font-bold ${admin.status === 'Ativo' ? 'bg-semantic-success/10 text-semantic-success' : 'bg-semantic-error/10 text-semantic-error'}`}
-                      >
-                        {admin.status || 'Ativo'}
+                      <button className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-colors ${item.active
+                        ? 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20'
+                        : 'bg-surface-3 text-txt-primary hover:bg-surface-border'
+                        }`}>
+                        {item.active ? 'Ativado' : 'Ativar'}
                       </button>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => handleDeleteUser(admin.id)}
-                        className="p-1.5 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded transition-colors"
-                        title="Excluir Usuário"
-                      >
-                        <span className="material-symbols-outlined text-lg">delete</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
-      {/* Profile Settings */}
-      {activeTab === 'profile' && currentUser && (
-        <div className="bg-surface-1 border border-surface-border rounded-xl p-6 max-w-2xl mx-auto">
-          <h2 className="text-lg font-semibold text-txt-primary mb-6 border-b border-surface-border pb-2">Editar Meu Perfil</h2>
-          <form onSubmit={handleProfileUpdate} className="space-y-6">
-
-            {/* Avatar */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                {avatarFile ? (
-                  <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-24 h-24 rounded-full object-cover border-2 border-brand-primary" />
-                ) : currentUser.avatar_url ? (
-                  <img src={currentUser.avatar_url} alt={currentUser.name} className="w-24 h-24 rounded-full object-cover border-2 border-surface-border" />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-surface-3 flex items-center justify-center border-2 border-surface-border">
-                    <span className="material-symbols-outlined text-4xl text-txt-tertiary">person</span>
+          {/* Users Tab */}
+          {activeTab === 'users' && (
+            <div className="max-w-4xl animate-fade-in">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-xl font-bold text-txt-primary">Gestão de Utilizadores</h2>
+                <button onClick={() => navigate('/settings/users/create')} className="px-4 py-2 bg-brand-primary text-white rounded-lg text-sm font-bold shadow-lg shadow-brand-primary/20 hover:bg-brand-hover transition-colors">
+                  Adicionar Novo
+                </button>
+              </div>
+              <div className="grid gap-4">
+                {admins.map(admin => (
+                  <div key={admin.id} className="flex items-center justify-between p-4 bg-surface-2 rounded-xl border border-transparent hover:border-surface-border transition-all">
+                    <div className="flex items-center gap-4">
+                      <img src={admin.avatar_url || 'https://i.pravatar.cc/150'} className="w-10 h-10 rounded-full object-cover" alt={admin.name} />
+                      <div>
+                        <p className="font-bold text-sm text-txt-primary">{admin.name}</p>
+                        <p className="text-xs text-txt-tertiary">{admin.email}</p>
+                      </div>
+                    </div>
+                    <span className={`text-xs px-3 py-1 rounded-full font-bold uppercase ${admin.role === 'owner' ? 'bg-brand-primary/10 text-brand-primary' : 'bg-surface-3 text-txt-secondary'
+                      }`}>
+                      {admin.role}
+                    </span>
                   </div>
-                )}
-                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="material-symbols-outlined text-white">edit</span>
-                </div>
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-              </div>
-              <p className="text-sm text-txt-tertiary">Clique para alterar a foto</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Nome Completo</label>
-                <input
-                  type="text"
-                  value={profileForm.name}
-                  onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                  className="w-full bg-bg-main border border-surface-border rounded-lg px-4 py-2.5 text-txt-primary focus:border-brand-primary outline-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Telemóvel</label>
-                <input
-                  type="text"
-                  value={profileForm.phone}
-                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                  placeholder="+351 ..."
-                  className="w-full bg-bg-main border border-surface-border rounded-lg px-4 py-2.5 text-txt-primary focus:border-brand-primary outline-none"
-                />
+                ))}
               </div>
             </div>
-
-            <div className="border-t border-surface-border pt-4 mt-4">
-              <h3 className="text-sm font-bold text-txt-primary mb-4">Alterar Senha (Opcional)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Nova Senha</label>
-                  <input
-                    type="password"
-                    value={profileForm.password}
-                    onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
-                    placeholder="••••••••"
-                    className="w-full bg-bg-main border border-surface-border rounded-lg px-4 py-2.5 text-txt-primary focus:border-brand-primary outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Confirmar Senha</label>
-                  <input
-                    type="password"
-                    value={profileForm.confirmPassword}
-                    onChange={(e) => setProfileForm({ ...profileForm, confirmPassword: e.target.value })}
-                    placeholder="••••••••"
-                    className="w-full bg-bg-main border border-surface-border rounded-lg px-4 py-2.5 text-txt-primary focus:border-brand-primary outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <button
-                type="submit"
-                disabled={profileLoading}
-                className="px-6 py-2.5 bg-brand-primary text-bg-main rounded-lg font-bold hover:bg-brand-hover transition-colors disabled:opacity-50"
-              >
-                {profileLoading ? 'A guardar...' : 'Guardar Alterações'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+          )}
+        </main>
+      </div>
     </div>
   );
 };

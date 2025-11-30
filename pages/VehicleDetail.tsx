@@ -287,28 +287,7 @@ export const VehicleDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Performance Chart Mock */}
-          <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
-            <h3 className="text-lg font-bold text-txt-primary mb-4">Performance Mensal (KM)</h3>
-            <div className="h-64 w-full bg-surface-2/50 rounded-lg flex items-end justify-between px-4 pb-4 pt-8 gap-2">
-              {[45, 52, 49, 60, 55, 65, 70, 68, 72, 60, 55, 65].map((h, i) => (
-                <div key={i} className="flex-1 flex flex-col justify-end group cursor-pointer">
-                  <div
-                    className="w-full bg-brand-primary/20 border-t-2 border-brand-primary hover:bg-brand-primary/40 transition-all rounded-t-sm relative"
-                    style={{ height: `${h}%` }}
-                  >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-3 text-txt-primary text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-surface-border z-10">
-                      {(h * 100).toLocaleString()} km
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-txt-tertiary px-2">
-              <span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span>
-              <span>Jul</span><span>Ago</span><span>Set</span><span>Out</span><span>Nov</span><span>Dez</span>
-            </div>
-          </div>
+
 
           {/* Maintenance History Component */}
           <MaintenanceHistory />

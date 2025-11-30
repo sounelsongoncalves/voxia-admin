@@ -12,11 +12,13 @@
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@react-google-maps/api": "^2.20.7",
     "@supabase/supabase-js": "^2.84.0",
+    "date-fns": "^4.1.0",
     "firebase": "^12.6.0",
     "firebase-admin": "^13.6.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.6"
+    "react-router-dom": "^7.9.6",
+    "recharts": "^3.5.1"
   },
   "devDependencies": {
     "@types/google.maps": "^3.58.1",
