@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../services/supabase';
 import { useUser } from './UserContext';
 import { alertsRepo } from '../repositories/alertsRepo';
+import { chatRepo } from '../repositories/chatRepo';
 import { Alert } from '../types';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
@@ -42,15 +43,59 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
         fetchAlerts();
 
         // Subscribe to new alerts
-        const subscription = alertsRepo.subscribeToAlerts((newAlert) => {
+        const alertSubscription = alertsRepo.subscribeToAlerts((newAlert) => {
             setAlerts(prev => [newAlert, ...prev]);
             setUnreadCount(prev => prev + 1);
+            playNotificationSound();
+        });
+
+        // Subscribe to new chat messages
+        const chatSubscription = chatRepo.subscribeToAllMessages((msg) => {
+            const newAlert: Alert = {
+                id: msg.id,
+                type: 'Info',
+                message: `Nova mensagem: ${msg.message}`,
+                timestamp: new Date(msg.sent_at).toLocaleString(),
+                vehicleId: undefined, // Chat messages might not be linked to a vehicle directly here
+                resolved_at: undefined
+            };
+
+            setAlerts(prev => [newAlert, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            playNotificationSound();
         });
 
         return () => {
-            subscription.unsubscribe();
+            alertSubscription.unsubscribe();
+            chatSubscription.unsubscribe();
         };
     }, []);
+
+    const playNotificationSound = () => {
+        try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioContext) return;
+
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch
+            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5); // Drop pitch
+
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+        } catch (e) {
+            console.error('Error playing sound', e);
+        }
+    };
 
     const fetchAlerts = async () => {
         try {

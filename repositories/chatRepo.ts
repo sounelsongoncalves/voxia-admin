@@ -71,6 +71,25 @@ export const chatRepo = {
             .subscribe();
     },
 
+    subscribeToAllMessages(callback: (msg: any) => void) {
+        return supabase
+            .channel('global-chat-messages')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+                async (payload) => {
+                    const newMsg = payload.new as any;
+                    // Only notify if it's NOT from an admin (i.e. it's from a driver)
+                    if (!newMsg.sender_admin_id) {
+                        // We might want to fetch the driver name here, but for now let's just pass the message
+                        // The receiver can handle fetching details if needed, or we can just say "New Message"
+                        callback(newMsg);
+                    }
+                }
+            )
+            .subscribe();
+    },
+
     async getThreads() {
         // List drivers as threads
         const { data, error } = await supabase
