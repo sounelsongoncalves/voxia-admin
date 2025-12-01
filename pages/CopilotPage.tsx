@@ -8,10 +8,22 @@ export const CopilotPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'chat' | 'settings'>('chat');
 
     // Chat State
+    const [conversations, setConversations] = useState<any[]>([]);
+    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+
+    // Chat State
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
 
     // Settings State
     const [settings, setSettings] = useState<AISettings>({ provider: 'openai', model: 'gpt-4o', hasKey: false });
@@ -20,12 +32,29 @@ export const CopilotPage: React.FC = () => {
 
     useEffect(() => {
         const init = async () => {
-            // await loadHistory(); // Disabled to always show initial screen
             await loadSettings();
-            // await checkAutoAnalysis(); // Disabled to always show initial screen
+            await loadConversations();
         };
         init();
     }, []);
+
+    const loadConversations = async () => {
+        const all = await copilotService.getAllConversations();
+        setConversations(all);
+    };
+
+    const selectConversation = async (id: string) => {
+        setCurrentConversationId(id);
+        setLoading(true);
+        try {
+            const msgs = await copilotService.getConversationMessages(id);
+            setMessages(msgs);
+        } catch (error) {
+            console.error('Failed to load conversation', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const checkAutoAnalysis = async () => {
         try {
@@ -37,7 +66,18 @@ export const CopilotPage: React.FC = () => {
                 setMessages(prev => [...prev, autoMsg]);
 
                 try {
-                    const response = await copilotService.query({ question: 'Faça uma análise breve dos KPIs atuais da frota e sugira ações.' });
+                    // Start a new conversation for auto-analysis? Or use current?
+                    // For now, let's assume it starts a new one if none active
+                    const response = await copilotService.query({
+                        question: 'Faça uma análise breve dos KPIs atuais da frota e sugira ações.',
+                        conversationId: currentConversationId || undefined
+                    });
+
+                    if (!currentConversationId && response.conversationId) {
+                        setCurrentConversationId(response.conversationId);
+                        loadConversations();
+                    }
+
                     const aiMsg = { role: 'ai', content: response.answer, created_at: new Date().toISOString() };
                     setMessages(prev => [...prev, aiMsg]);
                 } catch (err) {
@@ -59,9 +99,20 @@ export const CopilotPage: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const loadHistory = async () => {
-        const history = await copilotService.getHistory();
-        setMessages(history);
+    const handleDeleteConversation = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!confirm('Tem certeza que deseja apagar esta conversa?')) return;
+
+        try {
+            await copilotService.deleteConversation(id);
+            setConversations(prev => prev.filter(c => c.id !== id));
+            if (currentConversationId === id) {
+                handleNewChat();
+            }
+        } catch (error) {
+            console.error('Failed to delete conversation', error);
+            alert('Erro ao apagar conversa.');
+        }
     };
 
     const loadSettings = async () => {
@@ -71,15 +122,61 @@ export const CopilotPage: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim()) return;
+        if (!input.trim() && !selectedFile) return;
 
-        const userMsg = { role: 'admin', content: input, created_at: new Date().toISOString() };
+        const content = input;
+        const file = selectedFile;
+
+        // Optimistic UI update
+        const userMsg = {
+            role: 'admin',
+            content: content + (file ? `\n[Arquivo anexado: ${file.name}]` : ''),
+            created_at: new Date().toISOString()
+        };
         setMessages(prev => [...prev, userMsg]);
+
         setInput('');
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
         setLoading(true);
 
         try {
-            const response = await copilotService.query({ question: userMsg.content });
+            let attachment = undefined;
+            if (file) {
+                // Convert to base64
+                const reader = new FileReader();
+                const base64Promise = new Promise<string>((resolve, reject) => {
+                    reader.onload = () => {
+                        const result = reader.result as string;
+                        // Remove data URL prefix (e.g., "data:image/png;base64,")
+                        const base64 = result.split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+                const base64Content = await base64Promise;
+
+                attachment = {
+                    name: file.name,
+                    type: file.type,
+                    content: base64Content
+                };
+            }
+
+            const response = await copilotService.query({
+                question: content,
+                conversationId: currentConversationId || undefined,
+                attachment
+            });
+
+            if (!currentConversationId && response.conversationId) {
+                setCurrentConversationId(response.conversationId);
+                loadConversations();
+            }
+
             const aiMsg = { role: 'ai', content: response.answer, created_at: new Date().toISOString() };
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
@@ -110,7 +207,7 @@ export const CopilotPage: React.FC = () => {
     const handleNewChat = () => {
         setMessages([]);
         setInput('');
-        // Optionally reset other state if needed
+        setCurrentConversationId(null);
     };
 
     const suggestionCards = [
@@ -124,6 +221,12 @@ export const CopilotPage: React.FC = () => {
         setInput(action);
         // Optionally auto-submit:
         // handleSendMessage({ preventDefault: () => {} } as React.FormEvent);
+    };
+
+    // Helper to format date
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
     };
 
     return (
@@ -281,8 +384,32 @@ export const CopilotPage: React.FC = () => {
                         {/* Input Area */}
                         <div className="p-4 md:p-6 bg-bg-main/95 backdrop-blur-sm sticky bottom-0 z-10">
                             <div className="max-w-4xl mx-auto relative">
+                                {selectedFile && (
+                                    <div className="absolute -top-12 left-0 bg-surface-1 border border-surface-border rounded-lg p-2 flex items-center gap-2 shadow-lg animate-fade-in">
+                                        <span className="material-symbols-outlined text-brand-primary">description</span>
+                                        <span className="text-sm text-txt-primary max-w-[200px] truncate">{selectedFile.name}</span>
+                                        <button
+                                            onClick={() => setSelectedFile(null)}
+                                            className="p-1 hover:bg-surface-2 rounded-full text-txt-tertiary hover:text-red-500 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">close</span>
+                                        </button>
+                                    </div>
+                                )}
                                 <form onSubmit={handleSendMessage} className="relative bg-surface-1 border border-surface-border rounded-2xl shadow-lg flex items-end p-2 transition-colors focus-within:border-brand-primary/50">
-                                    <button type="button" className="p-3 text-txt-tertiary hover:text-brand-primary transition-colors rounded-xl hover:bg-surface-2">
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept=".pdf,.txt,.csv,.json,.png,.jpg,.jpeg"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="p-3 text-txt-tertiary hover:text-brand-primary transition-colors rounded-xl hover:bg-surface-2"
+                                        title="Anexar arquivo"
+                                    >
                                         <span className="material-symbols-outlined">add_circle</span>
                                     </button>
                                     <textarea
@@ -301,7 +428,7 @@ export const CopilotPage: React.FC = () => {
                                     />
                                     <button
                                         type="submit"
-                                        disabled={loading || !input.trim()}
+                                        disabled={loading || (!input.trim() && !selectedFile)}
                                         className="p-3 bg-brand-primary text-bg-main rounded-xl hover:bg-brand-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95"
                                     >
                                         <span className="material-symbols-outlined">arrow_upward</span>
@@ -331,23 +458,31 @@ export const CopilotPage: React.FC = () => {
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
                     <div>
-                        <h3 className="text-xs font-bold text-txt-tertiary uppercase tracking-wider mb-3 px-2">Hoje</h3>
+                        <h3 className="text-xs font-bold text-txt-tertiary uppercase tracking-wider mb-3 px-2">Histórico</h3>
                         <div className="space-y-1">
-                            {['Análise de Frota', 'Consumo de Combustível', 'Alertas de Segurança'].map((item, i) => (
-                                <button key={i} className="w-full text-left px-3 py-2 rounded-lg text-sm text-txt-secondary hover:bg-surface-2 hover:text-txt-primary transition-colors truncate">
-                                    {item}
-                                </button>
+                            {conversations.map((conv) => (
+                                <div key={conv.id} className="group relative">
+                                    <button
+                                        onClick={() => selectConversation(conv.id)}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors truncate pr-8 ${currentConversationId === conv.id
+                                            ? 'bg-brand-primary/10 text-brand-primary font-medium'
+                                            : 'text-txt-secondary hover:bg-surface-2 hover:text-txt-primary'
+                                            }`}
+                                    >
+                                        Conversa {formatDate(conv.created_at)}
+                                    </button>
+                                    <button
+                                        onClick={(e) => handleDeleteConversation(e, conv.id)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-txt-tertiary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                        title="Apagar conversa"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">delete</span>
+                                    </button>
+                                </div>
                             ))}
-                        </div>
-                    </div>
-                    <div>
-                        <h3 className="text-xs font-bold text-txt-tertiary uppercase tracking-wider mb-3 px-2">Ontem</h3>
-                        <div className="space-y-1">
-                            {['Relatório Mensal', 'Manutenção Preventiva'].map((item, i) => (
-                                <button key={i} className="w-full text-left px-3 py-2 rounded-lg text-sm text-txt-secondary hover:bg-surface-2 hover:text-txt-primary transition-colors truncate">
-                                    {item}
-                                </button>
-                            ))}
+                            {conversations.length === 0 && (
+                                <p className="text-xs text-txt-tertiary px-2">Nenhuma conversa salva.</p>
+                            )}
                         </div>
                     </div>
                 </div>

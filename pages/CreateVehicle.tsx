@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { vehiclesRepo } from '../repositories/vehiclesRepo';
 import { Status } from '../types';
 import { useToast } from '../components/ToastContext';
@@ -9,6 +10,7 @@ export const CreateVehicle: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const vehicleId = searchParams.get('id');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -41,14 +43,14 @@ export const CreateVehicle: React.FC = () => {
           }
         } catch (err) {
           console.error('Failed to fetch vehicle:', err);
-          showToast('Erro ao carregar dados do veículo.', 'error');
+          showToast(t('vehicles.create.validation.loadError'), 'error');
         } finally {
           setLoading(false);
         }
       };
       fetchVehicle();
     }
-  }, [vehicleId, showToast]);
+  }, [vehicleId, showToast, t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -60,7 +62,7 @@ export const CreateVehicle: React.FC = () => {
     setError('');
 
     if (!formData.plate || !formData.model) {
-      setError('Matrícula e modelo são obrigatórios');
+      setError(t('vehicles.create.validation.plateModelRequired'));
       return;
     }
 
@@ -78,17 +80,17 @@ export const CreateVehicle: React.FC = () => {
 
       if (vehicleId) {
         await vehiclesRepo.updateVehicle(vehicleId, vehicleData);
-        showToast('✅ Veículo atualizado com sucesso!', 'success');
+        showToast(t('vehicles.create.validation.updateSuccess'), 'success');
       } else {
         await vehiclesRepo.createVehicle(vehicleData);
-        showToast('✅ Veículo registado com sucesso!', 'success');
+        showToast(t('vehicles.create.validation.createSuccess'), 'success');
       }
 
       navigate('/vehicles');
     } catch (err: any) {
       console.error('Failed to save vehicle:', err);
-      setError(err.message || 'Erro ao salvar veículo. Tente novamente.');
-      showToast('Erro ao salvar veículo.', 'error');
+      setError(err.message || t('vehicles.create.validation.error'));
+      showToast(t('vehicles.create.validation.error'), 'error');
     } finally {
       setLoading(false);
     }
@@ -98,15 +100,15 @@ export const CreateVehicle: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-2 text-sm text-txt-tertiary mb-2">
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>Dashboard</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>{t('sidebar.overview')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/vehicles')}>Veículos</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/vehicles')}>{t('sidebar.vehicles')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="text-txt-primary">{vehicleId ? 'Editar Veículo' : 'Adicionar Veículo'}</span>
+        <span className="text-txt-primary">{vehicleId ? t('vehicles.create.editVehicle') : t('vehicles.create.newVehicle')}</span>
       </div>
 
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-txt-primary">{vehicleId ? 'Editar Veículo' : 'Registar Novo Veículo'}</h1>
+        <h1 className="text-2xl font-bold text-txt-primary">{vehicleId ? t('vehicles.create.editVehicle') : t('vehicles.create.registerNew')}</h1>
       </div>
 
       <div className="max-w-3xl">
@@ -116,42 +118,42 @@ export const CreateVehicle: React.FC = () => {
           <div>
             <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-brand-primary">directions_car</span>
-              Identificação do Veículo
+              {t('vehicles.create.identification')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Matrícula</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('vehicles.create.plate')}</label>
                 <input
                   name="plate"
                   value={formData.plate}
                   onChange={handleChange}
                   type="text"
-                  placeholder="EX: ABC-1234"
+                  placeholder={t('vehicles.create.platePlaceholder')}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary uppercase"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Modelo</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('vehicles.create.model')}</label>
                 <input
                   name="model"
                   value={formData.model}
                   onChange={handleChange}
                   type="text"
-                  placeholder="EX: FH 540"
+                  placeholder={t('vehicles.create.modelPlaceholder')}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Fabricante</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('vehicles.detail.manufacturer')}</label>
                 <select
                   name="manufacturer"
                   value={formData.manufacturer}
                   onChange={handleChange}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                 >
-                  <option value="">Selecione...</option>
+                  <option value="">{t('vehicles.create.manufacturerSelect')}</option>
                   <option value="volvo">Volvo</option>
                   <option value="scania">Scania</option>
                   <option value="mercedes">Mercedes-Benz</option>
@@ -163,13 +165,13 @@ export const CreateVehicle: React.FC = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Ano de Fabrico</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('vehicles.create.year')}</label>
                 <input
                   name="year"
                   value={formData.year}
                   onChange={handleChange}
                   type="number"
-                  placeholder="EX: 2023"
+                  placeholder={t('vehicles.create.yearPlaceholder')}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary"
                 />
               </div>
@@ -182,39 +184,39 @@ export const CreateVehicle: React.FC = () => {
           <div>
             <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-brand-primary">settings</span>
-              Status e Configuração
+              {t('vehicles.create.statusConfig')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Tipo de Veículo</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('vehicles.create.vehicleType')}</label>
                 <select
                   name="type"
                   value={formData.type}
                   onChange={handleChange}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                 >
-                  <option value="">Selecione o tipo</option>
-                  <option value="truck">Camião Pesado</option>
-                  <option value="light_truck">Camião Leve</option>
-                  <option value="van">Van de Carga</option>
-                  <option value="trailer">Carreta</option>
+                  <option value="">{t('vehicles.create.selectType')}</option>
+                  <option value="truck">{t('vehicles.create.types.truck')}</option>
+                  <option value="light_truck">{t('vehicles.create.types.light_truck')}</option>
+                  <option value="van">{t('vehicles.create.types.van')}</option>
+                  <option value="trailer">{t('vehicles.create.types.trailer')}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Status Inicial</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('vehicles.create.initialStatus')}</label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                 >
-                  <option value={Status.Active}>Ativo</option>
-                  <option value={Status.Inactive}>Inativo</option>
-                  <option value={Status.Error}>Em Manutenção</option>
+                  <option value={Status.Active}>{t('statusValues.Ativo')}</option>
+                  <option value={Status.Inactive}>{t('statusValues.Inativo')}</option>
+                  <option value={Status.Error}>{t('statusValues.Erro')}</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Nível de Combustível Inicial (%)</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('vehicles.create.initialFuel')}</label>
                 <input
                   name="fuel"
                   value={formData.fuel}
@@ -244,14 +246,14 @@ export const CreateVehicle: React.FC = () => {
               disabled={loading}
               className="px-6 py-2.5 rounded-lg border border-surface-border text-txt-primary hover:bg-surface-2 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Cancelar
+              {t('vehicles.create.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-6 py-2.5 rounded-lg bg-brand-primary text-bg-main font-bold hover:bg-brand-hover transition-colors text-sm shadow-lg shadow-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'A guardar...' : (vehicleId ? 'Atualizar Veículo' : 'Guardar Veículo')}
+              {loading ? t('vehicles.create.saving') : (vehicleId ? t('vehicles.create.update') : t('vehicles.create.save'))}
             </button>
           </div>
         </form>

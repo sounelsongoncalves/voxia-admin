@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
-// StatsCard removed in favor of inline styling for analytics look
+import { useTranslation } from 'react-i18next';
 import { tripsRepo } from '../repositories/tripsRepo';
 import { vehiclesRepo } from '../repositories/vehiclesRepo';
 import { alertsRepo } from '../repositories/alertsRepo';
@@ -13,7 +13,6 @@ import { useToast } from '../components/ToastContext';
 import { TripsPerDayChart } from '../components/charts/TripsPerDayChart';
 import { TopDriversChart } from '../components/charts/TopDriversChart';
 import { FuelConsumptionChart } from '../components/charts/FuelConsumptionChart';
-import { supabase } from '../services/supabase';
 
 const mapContainerStyle = {
   width: '100%',
@@ -29,6 +28,7 @@ const defaultCenter = {
 export const AdminHome: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [kpis, setKpis] = useState({
     totalDrivers: 0,
     activeDrivers: 0,
@@ -38,6 +38,13 @@ export const AdminHome: React.FC = () => {
     activeTrips: 0,
     openAlerts: 0,
   });
+
+  // Chart Data State
+  const [tripsPerDayData, setTripsPerDayData] = useState<any[]>([]);
+  const [topDriversData, setTopDriversData] = useState<any[]>([]);
+  const [fuelConsumptionData, setFuelConsumptionData] = useState<any[]>([]);
+
+  // Other Data State
   const [recentTrips, setRecentTrips] = useState<Trip[]>([]);
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [vehicleLocations, setVehicleLocations] = useState<any[]>([]);
@@ -53,14 +60,16 @@ export const AdminHome: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [drivers, vehicles, trips, alerts, locations, onlineDriversCount, vehiclesInUseCount] = await Promise.all([
+        const [drivers, vehicles, trips, alerts, locations, onlineDriversCount, vehiclesInUseCount, kmByDriver, fuelEfficiency] = await Promise.all([
           driversRepo.getDrivers(),
           vehiclesRepo.getVehicles(),
           tripsRepo.getTrips(),
           alertsRepo.getAlerts(),
           locationsRepo.getLatestLocations(),
           kpiRepo.getOnlineDriversCount(),
-          kpiRepo.getVehiclesInUseCount()
+          kpiRepo.getVehiclesInUseCount(),
+          kpiRepo.getKmByDriver(),
+          kpiRepo.getFuelEfficiency()
         ]);
 
         setKpis({
@@ -76,6 +85,43 @@ export const AdminHome: React.FC = () => {
         setRecentTrips(trips.slice(0, 5));
         setRecentAlerts(alerts.slice(0, 5));
         setVehicleLocations(locations);
+
+        // Process Trips Per Day
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        });
+
+        const tripsByDate = trips.reduce((acc: any, trip) => {
+          const date = trip.createdAt ? new Date(trip.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : 'N/A';
+          if (date !== 'N/A') {
+            acc[date] = (acc[date] || 0) + 1;
+          }
+          return acc;
+        }, {});
+
+        const tripsChartData = last7Days.map(date => ({
+          date,
+          trips: tripsByDate[date] || 0
+        }));
+        setTripsPerDayData(tripsChartData);
+
+        // Process Top Drivers
+        const topDrivers = kmByDriver.slice(0, 5).map(d => ({
+          name: d.driver_name,
+          km: d.total_km
+        }));
+        setTopDriversData(topDrivers);
+
+        // Process Fuel Consumption
+        // Assuming chart expects L/100km, but we have km/L. 
+        // 100 / km_per_l = L/100km
+        const fuelData = fuelEfficiency.slice(0, 5).map(v => ({
+          plate: v.vehicle_plate,
+          consumption: v.avg_fuel_efficiency_km_per_l ? parseFloat((100 / v.avg_fuel_efficiency_km_per_l).toFixed(1)) : 0
+        }));
+        setFuelConsumptionData(fuelData);
 
         const activeTrips = trips.filter(t => t.status === Status.InTransit || t.status === Status.Active);
         const driversWithTripsData = activeTrips.map(trip => {
@@ -94,18 +140,18 @@ export const AdminHome: React.FC = () => {
   }, []);
 
   const handleDownloadReport = () => {
-    showToast('Relatório Geral sendo gerado. O download iniciará em breve.', 'success');
+    showToast(t('dashboard.downloadReportToast'), 'success');
   };
 
   return (
     <div className="flex-1 px-4 md:px-6 lg:px-8 py-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-txt-primary">Visão Geral</h1>
+        <h1 className="text-2xl font-bold text-txt-primary">{t('dashboard.title')}</h1>
         <button
           onClick={handleDownloadReport}
           className="px-4 py-2 bg-surface-1 hover:bg-surface-2 text-brand-primary text-sm font-medium rounded-lg border border-brand-primary transition-all hover:-translate-y-0.5 hover:shadow-lg shadow-emerald-500/10"
         >
-          Descarregar Relatório
+          {t('dashboard.downloadReport')}
         </button>
       </div>
 
@@ -114,11 +160,11 @@ export const AdminHome: React.FC = () => {
         {/* Motoristas Online */}
         <div onClick={() => navigate('/drivers?online=true')} className="bg-surface-1 border border-surface-border rounded-xl p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-2 transition-colors group">
           <div>
-            <p className="text-xs text-txt-tertiary mb-1">Motoristas Online</p>
+            <p className="text-xs text-txt-tertiary mb-1">{t('dashboard.onlineDrivers')}</p>
             <h3 className="text-2xl font-semibold text-txt-primary">{kpis.activeDrivers}</h3>
             <p className="text-xs text-semantic-success mt-1 flex items-center gap-1">
               <span className="material-symbols-outlined text-[14px]">trending_up</span>
-              Disponíveis
+              {t('dashboard.available')}
             </p>
           </div>
           <div className="rounded-full bg-surface-2 p-3 flex items-center justify-center text-semantic-success group-hover:bg-semantic-success/10 transition-colors">
@@ -129,11 +175,11 @@ export const AdminHome: React.FC = () => {
         {/* Viaturas em Uso */}
         <div onClick={() => navigate('/vehicles?in_use=true')} className="bg-surface-1 border border-surface-border rounded-xl p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-2 transition-colors group">
           <div>
-            <p className="text-xs text-txt-tertiary mb-1">Viaturas em Uso</p>
+            <p className="text-xs text-txt-tertiary mb-1">{t('dashboard.vehiclesInUse')}</p>
             <h3 className="text-2xl font-semibold text-txt-primary">{kpis.vehiclesInUse}</h3>
             <p className="text-xs text-semantic-info mt-1 flex items-center gap-1">
               <span className="material-symbols-outlined text-[14px]">local_shipping</span>
-              Em operação
+              {t('dashboard.inOperation')}
             </p>
           </div>
           <div className="rounded-full bg-surface-2 p-3 flex items-center justify-center text-semantic-info group-hover:bg-semantic-info/10 transition-colors">
@@ -144,11 +190,11 @@ export const AdminHome: React.FC = () => {
         {/* Viagens Ativas */}
         <div onClick={() => navigate('/trips?status=active')} className="bg-surface-1 border border-surface-border rounded-xl p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-2 transition-colors group">
           <div>
-            <p className="text-xs text-txt-tertiary mb-1">Viagens Ativas</p>
+            <p className="text-xs text-txt-tertiary mb-1">{t('dashboard.activeTrips')}</p>
             <h3 className="text-2xl font-semibold text-txt-primary">{kpis.activeTrips}</h3>
             <p className="text-xs text-brand-primary mt-1 flex items-center gap-1">
               <span className="material-symbols-outlined text-[14px]">route</span>
-              Em andamento
+              {t('dashboard.inProgress')}
             </p>
           </div>
           <div className="rounded-full bg-surface-2 p-3 flex items-center justify-center text-brand-primary group-hover:bg-brand-primary/10 transition-colors">
@@ -159,11 +205,11 @@ export const AdminHome: React.FC = () => {
         {/* Alertas Abertos */}
         <div onClick={() => navigate('/alerts?status=open')} className="bg-surface-1 border border-surface-border rounded-xl p-4 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-2 transition-colors group">
           <div>
-            <p className="text-xs text-txt-tertiary mb-1">Alertas Abertos</p>
+            <p className="text-xs text-txt-tertiary mb-1">{t('dashboard.openAlerts')}</p>
             <h3 className="text-2xl font-semibold text-txt-primary">{kpis.openAlerts}</h3>
             <p className="text-xs text-semantic-warning mt-1 flex items-center gap-1">
               <span className="material-symbols-outlined text-[14px]">warning</span>
-              Requer Atenção
+              {t('dashboard.requiresAttention')}
             </p>
           </div>
           <div className="rounded-full bg-surface-2 p-3 flex items-center justify-center text-semantic-warning group-hover:bg-semantic-warning/10 transition-colors">
@@ -174,43 +220,43 @@ export const AdminHome: React.FC = () => {
 
       {/* Charts Section */}
       <div className="w-full">
-        <TripsPerDayChart />
+        <TripsPerDayChart data={tripsPerDayData} />
       </div>
 
       {/* Secondary Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TopDriversChart />
-        <FuelConsumptionChart />
+        <TopDriversChart data={topDriversData} />
+        <FuelConsumptionChart data={fuelConsumptionData} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Recent Trips Table */}
         <div className="xl:col-span-2 bg-surface-1 border border-surface-border rounded-xl overflow-hidden flex flex-col">
           <div className="flex justify-between items-center p-4 border-b border-surface-border bg-surface-1/50 backdrop-blur-sm">
-            <h3 className="font-semibold text-txt-primary">Viagens Recentes</h3>
-            <button onClick={() => navigate('/trips')} className="text-brand-primary text-sm font-medium hover:underline">Ver Todas</button>
+            <h3 className="font-semibold text-txt-primary">{t('dashboard.recentTrips')}</h3>
+            <button onClick={() => navigate('/trips')} className="text-brand-primary text-sm font-medium hover:underline">{t('dashboard.viewAll')}</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-surface-1">
                 <tr className="border-b border-surface-border">
-                  <th className="hidden sm:table-cell px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">ID</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">Rota</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider text-right">Progresso</th>
+                  <th className="hidden sm:table-cell px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">{t('table.id')}</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">{t('table.route')}</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider">{t('table.status')}</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-txt-tertiary uppercase tracking-wider text-right">{t('table.progress')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border bg-surface-1">
                 {loading ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-8 text-center text-txt-tertiary">
-                      Carregando...
+                      {t('common.loading')}
                     </td>
                   </tr>
                 ) : recentTrips.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-4 py-8 text-center text-txt-tertiary">
-                      Nenhuma viagem encontrada
+                      {t('dashboard.noTripsFound')}
                     </td>
                   </tr>
                 ) : (
@@ -260,7 +306,7 @@ export const AdminHome: React.FC = () => {
         {/* Quick Actions / Mini Map */}
         <div className="space-y-4">
           <div className="bg-surface-1 border border-surface-border rounded-xl p-4 space-y-4 flex flex-col">
-            <h3 className="font-semibold text-txt-primary">Mapa da Frota</h3>
+            <h3 className="font-semibold text-txt-primary">{t('dashboard.fleetMap')}</h3>
             <div
               className="w-full h-64 md:h-80 rounded-lg overflow-hidden relative bg-surface-2 group cursor-pointer border border-surface-border"
               onClick={() => navigate('/map')}
@@ -268,13 +314,13 @@ export const AdminHome: React.FC = () => {
               {loadError ? (
                 <div className="w-full h-full flex flex-col items-center justify-center text-semantic-error text-sm p-4 text-center bg-surface-2 border border-semantic-error/20 rounded-lg">
                   <span className="material-symbols-outlined text-3xl mb-2">error</span>
-                  <p className="font-bold">Erro ao carregar o mapa</p>
+                  <p className="font-bold">{t('dashboard.mapError')}</p>
                   <p className="text-xs mt-1 opacity-80 break-all max-w-[90%]">{loadError.message || JSON.stringify(loadError)}</p>
-                  <p className="text-xs mt-2 text-txt-tertiary">Verifique se a "Maps JavaScript API" está ativada no Google Cloud Console.</p>
+                  <p className="text-xs mt-2 text-txt-tertiary">{t('dashboard.mapErrorDetail')}</p>
                 </div>
               ) : !isLoaded ? (
                 <div className="w-full h-full flex items-center justify-center text-txt-tertiary text-sm">
-                  {googleMapsApiKey ? 'Carregando Mapa...' : 'Mapa Indisponível (API Key não configurada)'}
+                  {googleMapsApiKey ? t('dashboard.mapLoading') : t('dashboard.mapUnavailable')}
                 </div>
               ) : (
                 <GoogleMap
@@ -311,27 +357,27 @@ export const AdminHome: React.FC = () => {
               )}
 
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <span className="text-brand-primary font-medium">Abrir Mapa Completo</span>
+                <span className="text-brand-primary font-medium">{t('dashboard.openFullMap')}</span>
               </div>
             </div>
           </div>
 
           <div className="bg-surface-1 border border-surface-border rounded-xl p-4 space-y-4">
-            <h3 className="font-semibold text-txt-primary mb-3">Ações Rápidas</h3>
+            <h3 className="font-semibold text-txt-primary mb-3">{t('dashboard.quickActions')}</h3>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => navigate('/trips/create')}
                 className="p-3 rounded-lg bg-surface-2 hover:bg-surface-3 text-left border border-surface-border transition-all hover:-translate-y-0.5 hover:shadow-lg shadow-emerald-500/10 group"
               >
                 <span className="material-symbols-outlined text-brand-primary mb-2 group-hover:text-brand-hover">add_location</span>
-                <div className="text-sm font-medium text-txt-primary">Nova Viagem</div>
+                <div className="text-sm font-medium text-txt-primary">{t('dashboard.newTrip')}</div>
               </button>
               <button
                 onClick={() => navigate('/drivers/create')}
                 className="p-3 rounded-lg bg-surface-2 hover:bg-surface-3 text-left border border-surface-border transition-all hover:-translate-y-0.5 hover:shadow-lg shadow-emerald-500/10 group"
               >
                 <span className="material-symbols-outlined text-semantic-info mb-2">person_add</span>
-                <div className="text-sm font-medium text-txt-primary">Adicionar Motorista</div>
+                <div className="text-sm font-medium text-txt-primary">{t('dashboard.addDriver')}</div>
               </button>
             </div>
           </div>
@@ -339,14 +385,14 @@ export const AdminHome: React.FC = () => {
           {/* Active Drivers List */}
           <div className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden flex flex-col">
             <div className="flex justify-between items-center p-4 border-b border-surface-border bg-surface-1/50 backdrop-blur-sm">
-              <h3 className="font-semibold text-txt-primary">Motoristas em Viagem</h3>
+              <h3 className="font-semibold text-txt-primary">{t('dashboard.driversOnTrip')}</h3>
               <span className="text-xs font-medium text-semantic-success bg-semantic-success/10 px-2 py-1 rounded-full">
-                {activeDriversWithTrips.length} Online
+                {activeDriversWithTrips.length} {t('common.online')}
               </span>
             </div>
             <div className="p-4 space-y-3">
               {activeDriversWithTrips.length === 0 ? (
-                <p className="text-sm text-txt-tertiary text-center py-4">Nenhum motorista em viagem no momento.</p>
+                <p className="text-sm text-txt-tertiary text-center py-4">{t('dashboard.noDriversOnTrip')}</p>
               ) : (
                 activeDriversWithTrips.slice(0, 5).map((item) => (
                   <div key={item.trip.id} className="flex items-center justify-between p-2 hover:bg-surface-2 rounded-lg transition-colors cursor-pointer" onClick={() => navigate(`/drivers/${item.driver.id}`)}>
@@ -369,7 +415,7 @@ export const AdminHome: React.FC = () => {
                     <div className="text-right">
                       <div className="flex flex-col items-end">
                         <span className="text-xs font-mono text-brand-primary font-medium">{item.trip.progress}%</span>
-                        <span className="text-xs text-txt-tertiary">Progresso</span>
+                        <span className="text-xs text-txt-tertiary">{t('table.progress')}</span>
                       </div>
                     </div>
                   </div>
@@ -379,7 +425,7 @@ export const AdminHome: React.FC = () => {
             {activeDriversWithTrips.length > 5 && (
               <div className="p-4 pt-0">
                 <button onClick={() => navigate('/drivers')} className="w-full text-center text-xs text-txt-tertiary hover:text-brand-primary transition-colors">
-                  Ver todos ({activeDriversWithTrips.length})
+                  {t('dashboard.viewAll')} ({activeDriversWithTrips.length})
                 </button>
               </div>
             )}

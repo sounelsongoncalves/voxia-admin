@@ -1,5 +1,5 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { maintenanceRepo, MaintenanceRecord } from '../repositories/maintenanceRepo';
 
 interface MaintenanceHistoryProps {
@@ -7,6 +7,7 @@ interface MaintenanceHistoryProps {
 }
 
 export const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ vehicleId }) => {
+  const { t, i18n } = useTranslation();
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,14 +85,14 @@ export const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ vehicleI
   return (
     <div className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden">
       <div className="p-6 border-b border-surface-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h3 className="text-lg font-bold text-txt-primary">Histórico de Manutenção</h3>
+        <h3 className="text-lg font-bold text-txt-primary">{t('maintenance.title')}</h3>
 
         <div className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-txt-tertiary text-sm">search</span>
             <input
               type="text"
-              placeholder="Filtrar serviços..."
+              placeholder={t('maintenance.filterPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-surface-2 border border-surface-border rounded-lg py-2 pl-9 pr-4 text-sm text-txt-primary focus:border-brand-primary focus:outline-none placeholder-txt-tertiary transition-all"
@@ -111,7 +112,7 @@ export const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ vehicleI
                 onClick={() => handleSort('performed_at')}
               >
                 <div className="flex items-center gap-1">
-                  Data
+                  {t('maintenance.table.date')}
                   {getSortIcon('performed_at')}
                 </div>
               </th>
@@ -120,7 +121,7 @@ export const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ vehicleI
                 onClick={() => handleSort('description')}
               >
                 <div className="flex items-center gap-1">
-                  Descrição
+                  {t('maintenance.table.description')}
                   {getSortIcon('description')}
                 </div>
               </th>
@@ -129,25 +130,25 @@ export const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ vehicleI
                 onClick={() => handleSort('cost')}
               >
                 <div className="flex items-center gap-1">
-                  Custo
+                  {t('maintenance.table.cost')}
                   {getSortIcon('cost')}
                 </div>
               </th>
-              <th className="px-6 py-3">Tipo</th>
+              <th className="px-6 py-3">{t('maintenance.table.type')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-border text-txt-secondary">
             {loading ? (
-              <tr><td colSpan={4} className="px-6 py-8 text-center text-txt-tertiary">Carregando...</td></tr>
+              <tr><td colSpan={4} className="px-6 py-8 text-center text-txt-tertiary">{t('maintenance.loading')}</td></tr>
             ) : sortedAndFilteredRecords.length > 0 ? (
               sortedAndFilteredRecords.map((record) => (
                 <tr key={record.id} className="hover:bg-surface-2 transition-colors">
                   <td className="px-6 py-4 text-txt-tertiary whitespace-nowrap font-mono">
-                    {new Date(record.performed_at).toLocaleDateString('pt-BR')}
+                    {new Date(record.performed_at).toLocaleDateString(i18n.language)}
                   </td>
                   <td className="px-6 py-4 font-medium text-txt-primary">{record.description}</td>
                   <td className="px-6 py-4 font-mono">
-                    {record.cost ? record.cost.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                    {record.cost ? record.cost.toLocaleString(i18n.language, { style: 'currency', currency: 'EUR' }) : '-'}
                   </td>
                   <td className="px-6 py-4 text-txt-tertiary capitalize">{record.type}</td>
                 </tr>
@@ -155,7 +156,7 @@ export const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ vehicleI
             ) : (
               <tr>
                 <td colSpan={4} className="px-6 py-8 text-center text-txt-tertiary">
-                  Nenhum registro encontrado para "{searchTerm}"
+                  {t('maintenance.noRecords', { term: searchTerm })}
                 </td>
               </tr>
             )}
@@ -164,11 +165,11 @@ export const MaintenanceHistory: React.FC<MaintenanceHistoryProps> = ({ vehicleI
       </div>
       <div className="p-4 border-t border-surface-border bg-surface-2/30 flex justify-between items-center">
         <span className="text-xs text-txt-tertiary">
-          Mostrando {sortedAndFilteredRecords.length} registros
+          {t('maintenance.showing', { count: sortedAndFilteredRecords.length })}
         </span>
         <button className="text-xs font-medium text-brand-primary hover:text-brand-hover hover:underline transition-colors flex items-center gap-1">
           <span className="material-symbols-outlined text-sm">download</span>
-          Exportar CSV
+          {t('maintenance.exportCsv')}
         </button>
       </div>
     </div>

@@ -1,6 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { vehiclesRepo } from '../repositories/vehiclesRepo';
 import { maintenanceRepo } from '../repositories/maintenanceRepo';
 import { tripsRepo } from '../repositories/tripsRepo';
@@ -15,6 +15,7 @@ export const VehicleDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { showToast } = useToast();
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [maintenanceRecords, setMaintenanceRecords] = useState<any[]>([]);
@@ -29,31 +30,55 @@ export const VehicleDetail: React.FC = () => {
       try {
         setLoading(true);
 
-        // Parallel fetching
-        const [vehicleData, maintenanceData, tripsData, locationData, alertsData] = await Promise.all([
-          vehiclesRepo.getVehicleById(id),
-          maintenanceRepo.getMaintenanceByVehicle(id),
-          tripsRepo.getTripsByVehicle(id),
-          locationsRepo.getLatestLocationByVehicle(id),
-          alertsRepo.getAlertsByVehicle(id)
-        ]);
-
+        // 1. Fetch Vehicle Core Data (Critical)
+        const vehicleData = await vehiclesRepo.getVehicleById(id);
         setVehicle(vehicleData);
-        setMaintenanceRecords(maintenanceData);
-        setRecentTrips(tripsData.slice(0, 5));
-        setLocation(locationData);
-        setAlerts(alertsData);
+
+        if (!vehicleData) {
+          setLoading(false);
+          return;
+        }
+
+        // 2. Fetch Secondary Data (Non-critical)
+        // We use Promise.allSettled or individual try-catch to ensure one failure doesn't block the UI
+        try {
+          const [maintenanceData, tripsData, locationData, alertsData] = await Promise.all([
+            maintenanceRepo.getMaintenanceByVehicle(id).catch(err => {
+              console.warn('Failed to fetch maintenance:', err);
+              return [];
+            }),
+            tripsRepo.getTripsByVehicle(id).catch(err => {
+              console.warn('Failed to fetch trips:', err);
+              return [];
+            }),
+            locationsRepo.getLatestLocationByVehicle(id).catch(err => {
+              console.warn('Failed to fetch location:', err);
+              return null;
+            }),
+            alertsRepo.getAlertsByVehicle(id).catch(err => {
+              console.warn('Failed to fetch alerts:', err);
+              return [];
+            })
+          ]);
+
+          setMaintenanceRecords(maintenanceData);
+          setRecentTrips(tripsData.slice(0, 5));
+          setLocation(locationData);
+          setAlerts(alertsData);
+        } catch (secondaryErr) {
+          console.error('Error fetching secondary data:', secondaryErr);
+        }
 
       } catch (error) {
         console.error('Failed to fetch vehicle details:', error);
-        showToast('Erro ao carregar detalhes do veículo', 'error');
+        showToast(t('vehicles.detail.loadError'), 'error');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [id, showToast]);
+  }, [id, showToast, t]);
 
   const getStatusColor = (status: Status) => {
     switch (status) {
@@ -73,15 +98,15 @@ export const VehicleDetail: React.FC = () => {
   const handleDeactivate = async () => {
     if (!vehicle) return;
 
-    if (window.confirm('Tem certeza que deseja desativar este veículo? Esta ação não pode ser desfeita facilmente.')) {
+    if (window.confirm(t('vehicles.detail.deactivateConfirm'))) {
       try {
         await vehiclesRepo.updateVehicle(vehicle.id, { status: Status.Inactive });
         setVehicle({ ...vehicle, status: Status.Inactive });
-        showToast('Veículo desativado com sucesso.', 'success');
+        showToast(t('vehicles.detail.deactivateSuccess'), 'success');
         navigate('/vehicles');
       } catch (err) {
         console.error('Failed to deactivate vehicle:', err);
-        showToast('Erro ao desativar veículo.', 'error');
+        showToast(t('vehicles.detail.deactivateError'), 'error');
       }
     }
   };
@@ -93,7 +118,7 @@ export const VehicleDetail: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-txt-tertiary">Carregando detalhes do veículo...</p>
+        <p className="text-txt-tertiary">{t('vehicles.detail.loadingDetails')}</p>
       </div>
     );
   }
@@ -101,12 +126,12 @@ export const VehicleDetail: React.FC = () => {
   if (!vehicle) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
-        <p className="text-txt-tertiary">Veículo não encontrado</p>
+        <p className="text-txt-tertiary">{t('vehicles.detail.notFound')}</p>
         <button
           onClick={() => navigate('/vehicles')}
           className="px-4 py-2 bg-brand-primary text-bg-main rounded-lg"
         >
-          Voltar para Veículos
+          {t('vehicles.detail.backToVehicles')}
         </button>
       </div>
     );
@@ -123,9 +148,9 @@ export const VehicleDetail: React.FC = () => {
     <div className="space-y-6">
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-sm text-txt-tertiary mb-2">
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>Dashboard</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>{t('sidebar.overview')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/vehicles')}>Veículos</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/vehicles')}>{t('sidebar.vehicles')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
         <span className="text-txt-primary">{vehicle.model}</span>
       </div>
@@ -136,11 +161,11 @@ export const VehicleDetail: React.FC = () => {
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border ${getStatusColor(vehicle.status)}`}>
-                {vehicle.status}
+                {t(`statusValues.${vehicle.status}`)}
               </span>
               <span className="text-xs text-txt-tertiary flex items-center gap-1">
                 <span className="material-symbols-outlined text-sm">location_on</span>
-                {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Localização desconhecida'}
+                {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : t('vehicles.unknownLocation')}
               </span>
             </div>
             <h1 className="text-3xl font-bold text-txt-primary mb-1">{vehicle.model}</h1>
@@ -160,21 +185,21 @@ export const VehicleDetail: React.FC = () => {
             className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-brand-primary text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">edit</span>
-            Editar
+            {t('vehicles.edit')}
           </button>
           <button
             onClick={handleMaintenance}
             className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-txt-primary text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">build</span>
-            Registrar Manutenção
+            {t('vehicles.detail.registerMaintenance')}
           </button>
           <button
             onClick={handleDeactivate}
             className="px-4 py-2 bg-semantic-error/10 hover:bg-semantic-error/20 text-semantic-error text-sm font-bold rounded-lg transition-colors ml-auto flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-lg">block</span>
-            Desativar Veículo
+            {t('vehicles.detail.deactivate')}
           </button>
         </div>
       </div>
@@ -189,27 +214,27 @@ export const VehicleDetail: React.FC = () => {
             <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
               <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-brand-primary">info</span>
-                Especificações Técnicas
+                {t('vehicles.detail.specs')}
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-surface-border">
-                  <span className="text-sm text-txt-tertiary">Fabricante</span>
+                  <span className="text-sm text-txt-tertiary">{t('vehicles.detail.manufacturer')}</span>
                   <span className="text-sm font-medium text-txt-primary">{vehicle.manufacturer || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-surface-border">
-                  <span className="text-sm text-txt-tertiary">Ano/Modelo</span>
+                  <span className="text-sm text-txt-tertiary">{t('vehicles.detail.yearModel')}</span>
                   <span className="text-sm font-medium text-txt-primary">{vehicle.year || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-surface-border">
-                  <span className="text-sm text-txt-tertiary">Tipo</span>
-                  <span className="text-sm font-medium text-txt-primary">{vehicle.type || 'N/A'}</span>
+                  <span className="text-sm text-txt-tertiary">{t('vehicles.detail.type')}</span>
+                  <span className="text-sm font-medium text-txt-primary">{vehicle.type ? t(`vehicles.create.types.${vehicle.type}`) : 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-surface-border">
-                  <span className="text-sm text-txt-tertiary">Odômetro</span>
+                  <span className="text-sm text-txt-tertiary">{t('vehicles.detail.odometer')}</span>
                   <span className="text-sm font-medium text-txt-primary">{vehicle.odometer ? `${vehicle.odometer.toLocaleString()} km` : 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-sm text-txt-tertiary">VIN / Chassi</span>
+                  <span className="text-sm text-txt-tertiary">{t('vehicles.detail.vin')}</span>
                   <span className="text-xs font-mono text-txt-secondary">N/A</span>
                 </div>
               </div>
@@ -219,14 +244,14 @@ export const VehicleDetail: React.FC = () => {
             <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
               <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-brand-primary">speed</span>
-                Status Atual
+                {t('vehicles.detail.currentStatus')}
               </h3>
 
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-txt-tertiary flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">local_gas_station</span> Combustível
+                      <span className="material-symbols-outlined text-sm">local_gas_station</span> {t('vehicles.table.fuel')}
                     </span>
                     <span className={`font-bold ${vehicle.fuel < 20 ? 'text-semantic-error' : 'text-txt-primary'}`}>{vehicle.fuel}%</span>
                   </div>
@@ -250,7 +275,7 @@ export const VehicleDetail: React.FC = () => {
                       <>
                         <div className="flex justify-between text-sm mb-2">
                           <span className="text-txt-tertiary flex items-center gap-1">
-                            <span className="material-symbols-outlined text-sm">health_and_safety</span> Saúde do Veículo
+                            <span className="material-symbols-outlined text-sm">health_and_safety</span> {t('vehicles.detail.vehicleHealth')}
                           </span>
                           <span className={`font-bold ${healthColor}`}>{health}%</span>
                         </div>
@@ -264,23 +289,23 @@ export const VehicleDetail: React.FC = () => {
 
                 <div className="pt-4 border-t border-surface-border flex justify-between items-center">
                   <div>
-                    <p className="text-xs text-txt-tertiary">Motorista Atual</p>
+                    <p className="text-xs text-txt-tertiary">{t('vehicles.detail.assignedDriver')}</p>
                     {vehicle.driverId ? (
                       <div className="flex items-center gap-2 mt-1 cursor-pointer hover:opacity-80" onClick={() => navigate(`/drivers/${vehicle.driverId}`)}>
                         <div className="w-6 h-6 rounded-full bg-surface-3 flex items-center justify-center text-xs font-bold text-brand-primary">
                           D
                         </div>
-                        <span className="text-sm font-medium text-brand-primary hover:underline">Ver Motorista</span>
+                        <span className="text-sm font-medium text-brand-primary hover:underline">{t('vehicles.detail.viewDriver')}</span>
                       </div>
                     ) : (
-                      <p className="text-sm font-medium text-txt-secondary mt-1">Nenhum motorista atribuído</p>
+                      <p className="text-sm font-medium text-txt-secondary mt-1">{t('vehicles.detail.noDriverAssigned')}</p>
                     )}
                   </div>
                   <button
                     onClick={() => navigate('/audit')}
                     className="text-xs text-txt-tertiary hover:text-txt-primary flex items-center gap-1 border border-surface-border rounded px-2 py-1 hover:bg-surface-2 transition-colors"
                   >
-                    <span className="material-symbols-outlined text-sm">history</span> Histórico
+                    <span className="material-symbols-outlined text-sm">history</span> {t('vehicles.detail.history')}
                   </button>
                 </div>
               </div>
@@ -295,12 +320,12 @@ export const VehicleDetail: React.FC = () => {
           {/* Trip Log */}
           <div className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden">
             <div className="p-6 border-b border-surface-border flex justify-between items-center">
-              <h3 className="text-lg font-bold text-txt-primary">Últimas Viagens</h3>
+              <h3 className="text-lg font-bold text-txt-primary">{t('vehicles.detail.recentTrips')}</h3>
               <button
                 onClick={() => navigate('/trips')}
                 className="text-sm text-brand-primary hover:underline"
               >
-                Ver Todas
+                {t('vehicles.detail.viewAll')}
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -318,7 +343,7 @@ export const VehicleDetail: React.FC = () => {
                   {recentTrips.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-8 text-center text-txt-tertiary">
-                        Nenhuma viagem registrada
+                        {t('vehicles.detail.noTrips')}
                       </td>
                     </tr>
                   ) : (
@@ -326,7 +351,7 @@ export const VehicleDetail: React.FC = () => {
                       <tr key={trip.id} className="hover:bg-surface-2 transition-colors">
                         <td className="px-6 py-4 text-txt-tertiary">
                           {/* Date formatting if available in trip object, otherwise placeholder */}
-                          Hoje
+                          {t('vehicles.detail.today')}
                         </td>
                         <td className="px-6 py-4">{trip.origin} → {trip.destination}</td>
                         <td className="px-6 py-4">
@@ -334,7 +359,7 @@ export const VehicleDetail: React.FC = () => {
                             trip.status === Status.Completed ? 'bg-semantic-success/10 text-semantic-success' :
                               'bg-surface-3 text-txt-tertiary'
                             }`}>
-                            {trip.status}
+                            {t(`statusValues.${trip.status}`)}
                           </span>
                         </td>
                         <td className="px-6 py-4">{trip.eta}</td>
@@ -361,11 +386,11 @@ export const VehicleDetail: React.FC = () => {
           {/* Maintenance Schedule */}
           <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-txt-primary">Plano de Manutenção</h3>
+              <h3 className="text-lg font-bold text-txt-primary">{t('vehicles.detail.maintenancePlan')}</h3>
               {isServiceUpcoming && (
                 <div className="flex items-center gap-1 text-semantic-warning text-xs font-medium bg-semantic-warning/10 px-2 py-1 rounded">
                   <span className="material-symbols-outlined text-sm">warning</span>
-                  Próxima em {daysUntilService}d
+                  {t('vehicles.detail.nextIn', { days: daysUntilService })}
                 </div>
               )}
             </div>
@@ -378,13 +403,13 @@ export const VehicleDetail: React.FC = () => {
                     {nextMaintenance.description}
                   </p>
                   <p className={`text-xs ${isServiceUpcoming ? 'text-semantic-warning font-bold' : 'text-txt-secondary'}`}>
-                    Previsão: {new Date(nextMaintenance.next_maintenance_date!).toLocaleDateString('pt-BR')}
-                    {isServiceUpcoming && <span className="ml-1">(Em breve)</span>}
+                    {t('vehicles.detail.forecast')}: {new Date(nextMaintenance.next_maintenance_date!).toLocaleDateString(i18n.language)}
+                    {isServiceUpcoming && <span className="ml-1">{t('vehicles.detail.soon')}</span>}
                   </p>
-                  <p className="text-xs text-txt-tertiary mt-1">Tipo: {nextMaintenance.type}</p>
+                  <p className="text-xs text-txt-tertiary mt-1">{t('vehicles.detail.type')}: {nextMaintenance.type}</p>
                 </div>
               ) : (
-                <p className="text-sm text-txt-tertiary">Nenhuma manutenção agendada</p>
+                <p className="text-sm text-txt-tertiary">{t('vehicles.detail.noMaintenanceScheduled')}</p>
               )}
 
               {/* Completed Maintenance History */}
@@ -392,7 +417,7 @@ export const VehicleDetail: React.FC = () => {
                 <div key={m.id} className="relative opacity-60">
                   <div className="absolute -left-[21px] top-1 w-4 h-4 rounded-full bg-bg-main border-2 border-semantic-success"></div>
                   <p className="text-sm font-bold text-txt-primary line-through">{m.description}</p>
-                  <p className="text-xs text-txt-secondary">Concluído em {new Date(m.performed_at).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-xs text-txt-secondary">{t('vehicles.detail.completedIn')} {new Date(m.performed_at).toLocaleDateString(i18n.language)}</p>
                 </div>
               ))}
             </div>
@@ -401,21 +426,21 @@ export const VehicleDetail: React.FC = () => {
               onClick={handleMaintenance}
               className="w-full mt-6 py-2 rounded-lg border border-surface-border hover:bg-surface-2 text-sm font-medium text-txt-primary transition-colors"
             >
-              Ver Histórico Completo
+              {t('vehicles.detail.viewFullHistory')}
             </button>
           </div>
 
           {/* Damage Reports - Placeholder for now as we don't have a damages table yet */}
           <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-txt-primary">Avarias Recentes</h3>
-              <span className="text-xs text-txt-tertiary">0 Pendentes</span>
+              <h3 className="text-lg font-bold text-txt-primary">{t('vehicles.detail.recentDamages')}</h3>
+              <span className="text-xs text-txt-tertiary">0 {t('vehicles.detail.pending')}</span>
             </div>
             <div className="space-y-4">
-              <p className="text-sm text-txt-tertiary text-center py-4">Nenhuma avaria registrada</p>
+              <p className="text-sm text-txt-tertiary text-center py-4">{t('vehicles.detail.noDamages')}</p>
             </div>
             <button className="w-full mt-4 py-2 text-xs text-brand-primary hover:underline font-medium">
-              Reportar Nova Avaria
+              {t('vehicles.detail.reportDamage')}
             </button>
           </div>
 

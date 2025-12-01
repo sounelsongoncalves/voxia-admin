@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import { tripsRepo } from '../repositories/tripsRepo';
 import { driversRepo } from '../repositories/driversRepo';
 import { vehiclesRepo } from '../repositories/vehiclesRepo';
@@ -12,6 +13,7 @@ import { useToast } from '../components/ToastContext';
 export const CreateTrip: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [trailers, setTrailers] = useState<Trailer[]>([]);
@@ -59,15 +61,15 @@ export const CreateTrip: React.FC = () => {
 
     // Validation
     if (!formData.origin || !formData.destination) {
-      setError('Origem e destino são obrigatórios');
+      setError(t('trips.validation.originDestRequired'));
       return;
     }
     if (!formData.driver || !formData.vehicle) {
-      setError('Motorista e veículo são obrigatórios');
+      setError(t('trips.validation.driverVehicleRequired'));
       return;
     }
     if (!formData.startTime) {
-      setError('Data e hora de partida são obrigatórias');
+      setError(t('trips.validation.startTimeRequired'));
       return;
     }
 
@@ -86,11 +88,11 @@ export const CreateTrip: React.FC = () => {
         cargoType: formData.cargoType,
       } as any);
 
-      showToast('✅ Viagem criada com sucesso!', 'success');
+      showToast(t('trips.createSuccess'), 'success');
       navigate('/trips');
     } catch (err: any) {
       console.error('Failed to create trip:', err);
-      setError(err.message || 'Erro ao criar viagem. Tente novamente.');
+      setError(err.message || t('trips.createError'));
     } finally {
       setLoading(false);
     }
@@ -100,15 +102,15 @@ export const CreateTrip: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-2 text-sm text-txt-tertiary mb-2">
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>Dashboard</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>{t('sidebar.overview')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/trips')}>Viagens</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/trips')}>{t('sidebar.trips')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="text-txt-primary">Nova Viagem</span>
+        <span className="text-txt-primary">{t('trips.newTrip')}</span>
       </div>
 
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-txt-primary">Criar Nova Viagem</h1>
+        <h1 className="text-2xl font-bold text-txt-primary">{t('trips.createNewTrip')}</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -120,11 +122,11 @@ export const CreateTrip: React.FC = () => {
             <div>
               <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-brand-primary">map</span>
-                Rota e Horário
+                {t('trips.routeAndSchedule')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Origem</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.origin')}</label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-txt-tertiary">trip_origin</span>
                     <input
@@ -132,13 +134,13 @@ export const CreateTrip: React.FC = () => {
                       value={formData.origin}
                       onChange={handleChange}
                       type="text"
-                      placeholder="Morada de partida..."
+                      placeholder={t('trips.originPlaceholder')}
                       className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Destino</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.destination')}</label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-txt-tertiary">location_on</span>
                     <input
@@ -146,13 +148,13 @@ export const CreateTrip: React.FC = () => {
                       value={formData.destination}
                       onChange={handleChange}
                       type="text"
-                      placeholder="Morada de chegada..."
+                      placeholder={t('trips.destinationPlaceholder')}
                       className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Data e Hora de Partida</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.startTime')}</label>
                   <input
                     name="startTime"
                     value={formData.startTime}
@@ -170,64 +172,64 @@ export const CreateTrip: React.FC = () => {
             <div>
               <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-brand-primary">local_shipping</span>
-                Recursos
+                {t('trips.resources')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Motorista</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.driver')}</label>
                   <select
                     name="driver"
                     value={formData.driver}
                     onChange={handleChange}
                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                   >
-                    <option value="">Selecione um motorista</option>
+                    <option value="">{t('trips.selectDriver')}</option>
                     {drivers.map(d => (
                       <option key={d.id} value={d.id}>{d.name} ({d.status})</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Veículo</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.vehicle')}</label>
                   <select
                     name="vehicle"
                     value={formData.vehicle}
                     onChange={handleChange}
                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                   >
-                    <option value="">Selecione um veículo</option>
+                    <option value="">{t('trips.selectVehicle')}</option>
                     {vehicles.map(v => (
                       <option key={v.id} value={v.id}>{v.model} - {v.plate}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-txt-secondary">Reboque (Opcional)</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.trailerOptional')}</label>
                   <select
                     name="trailer"
                     value={formData.trailer}
                     onChange={handleChange}
                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                   >
-                    <option value="">Selecione um reboque</option>
+                    <option value="">{t('trips.selectTrailer')}</option>
                     {trailers.map(t => (
                       <option key={t.id} value={t.id}>{t.plate} ({t.type})</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-txt-secondary">Tipo de Carga</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.cargoType')}</label>
                   <select
                     name="cargoType"
                     value={formData.cargoType}
                     onChange={handleChange}
                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                   >
-                    <option value="">Selecione o tipo</option>
-                    <option value="general">Carga Geral</option>
-                    <option value="refrigerated">Refrigerada</option>
-                    <option value="dangerous">Perigosa</option>
-                    <option value="grain">Granel</option>
+                    <option value="">{t('trips.selectType')}</option>
+                    <option value="general">{t('trips.cargoTypes.general')}</option>
+                    <option value="refrigerated">{t('trips.cargoTypes.refrigerated')}</option>
+                    <option value="dangerous">{t('trips.cargoTypes.dangerous')}</option>
+                    <option value="grain">{t('trips.cargoTypes.grain')}</option>
                   </select>
                 </div>
 
@@ -235,7 +237,7 @@ export const CreateTrip: React.FC = () => {
                 {formData.cargoType === 'refrigerated' && (
                   <div className="grid grid-cols-2 gap-4 md:col-span-2 bg-surface-2 p-4 rounded-lg border border-surface-border">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-txt-secondary">Motor da Frente (°C)</label>
+                      <label className="text-sm font-medium text-txt-secondary">{t('trips.tempFront')}</label>
                       <input
                         name="tempFront"
                         value={formData.tempFront}
@@ -243,12 +245,12 @@ export const CreateTrip: React.FC = () => {
                         type="number"
                         min="-30"
                         max="30"
-                        placeholder="Ex: -18"
+                        placeholder={t('trips.tempPlaceholder')}
                         className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-txt-secondary">Motor de Trás (°C)</label>
+                      <label className="text-sm font-medium text-txt-secondary">{t('trips.tempRear')}</label>
                       <input
                         name="tempRear"
                         value={formData.tempRear}
@@ -256,7 +258,7 @@ export const CreateTrip: React.FC = () => {
                         type="number"
                         min="-30"
                         max="30"
-                        placeholder="Ex: -18"
+                        placeholder={t('trips.tempPlaceholder')}
                         className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary"
                       />
                     </div>
@@ -264,13 +266,13 @@ export const CreateTrip: React.FC = () => {
                 )}
 
                 <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-txt-secondary">Descrição do Trabalho / Carga</label>
+                  <label className="text-sm font-medium text-txt-secondary">{t('trips.jobDescriptionLabel')}</label>
                   <textarea
                     name="jobDescription"
                     value={formData.jobDescription}
                     onChange={(e: any) => handleChange(e as any)}
                     rows={3}
-                    placeholder="Descreva os detalhes da carga e instruções especiais..."
+                    placeholder={t('trips.jobDescriptionPlaceholder')}
                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary resize-none"
                   />
                 </div>
@@ -292,14 +294,14 @@ export const CreateTrip: React.FC = () => {
                 disabled={loading}
                 className="px-6 py-2.5 rounded-lg border border-surface-border text-txt-primary hover:bg-surface-2 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={loading}
                 className="px-6 py-2.5 rounded-lg bg-brand-primary text-bg-main font-bold hover:bg-brand-hover transition-colors text-sm shadow-lg shadow-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'A criar...' : 'Confirmar Viagem'}
+                {loading ? t('common.creating') : t('trips.confirmTrip')}
               </button>
             </div>
           </form>
@@ -309,7 +311,7 @@ export const CreateTrip: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden h-96 flex flex-col">
             <div className="p-4 border-b border-surface-border bg-surface-3">
-              <h3 className="font-bold text-txt-primary">Prévia da Rota</h3>
+              <h3 className="font-bold text-txt-primary">{t('trips.routePreview')}</h3>
             </div>
             <div className="flex-1 relative bg-bg-sec">
               {/* Route Preview Map */}
@@ -342,11 +344,11 @@ export const CreateTrip: React.FC = () => {
               {/* Distance Info */}
               <div className="absolute bottom-4 left-4 right-4 bg-surface-1/90 backdrop-blur-sm border border-surface-border p-3 rounded-lg shadow-lg">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-txt-tertiary">Distância Estimada</span>
+                  <span className="text-xs text-txt-tertiary">{t('trips.estimatedDistance')}</span>
                   <span className="text-sm font-bold text-txt-primary">452 km</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-txt-tertiary">Tempo Estimado</span>
+                  <span className="text-xs text-txt-tertiary">{t('trips.estimatedTime')}</span>
                   <span className="text-sm font-bold text-txt-primary">6h 45min</span>
                 </div>
               </div>
@@ -356,9 +358,9 @@ export const CreateTrip: React.FC = () => {
           <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-xl p-4 flex gap-3">
             <span className="material-symbols-outlined text-brand-primary">auto_awesome</span>
             <div>
-              <h4 className="font-bold text-brand-primary text-sm mb-1">Sugestão do Copiloto</h4>
+              <h4 className="font-bold text-brand-primary text-sm mb-1">{t('trips.copilotSuggestion')}</h4>
               <p className="text-xs text-txt-secondary leading-relaxed">
-                O veículo <strong>Volvo FH 540</strong> está disponível e tem a melhor eficiência de combustível para esta rota.
+                <Trans i18nKey="trips.copilotSuggestionText" components={{ strong: <strong /> }} />
               </p>
             </div>
           </div>

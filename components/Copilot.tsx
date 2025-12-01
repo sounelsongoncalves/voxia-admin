@@ -10,6 +10,8 @@ export const Copilot: React.FC = () => {
     { type: 'ai', text: 'Olá Administrador. Estou analisando os dados da sua frota. Como posso ajudar hoje?' }
   ]);
 
+  const [conversationId, setConversationId] = useState<string | null>(null);
+
   useEffect(() => {
     setSuggestions(copilotService.getSuggestions());
     loadHistory();
@@ -17,17 +19,23 @@ export const Copilot: React.FC = () => {
 
   const loadHistory = async () => {
     try {
-      const historyData = await copilotService.getHistory();
-      if (historyData && historyData.length > 0) {
-        const formattedHistory = historyData.map((msg: any) => ({
-          type: msg.role === 'admin' ? 'user' : 'ai',
-          text: msg.content
-        }));
-        // Prepend default greeting if needed, or just replace
-        setHistory([
-          { type: 'ai', text: 'Olá Administrador. Estou analisando os dados da sua frota. Como posso ajudar hoje?' },
-          ...formattedHistory
-        ]);
+      const all = await copilotService.getAllConversations();
+      if (all.length > 0) {
+        const latestId = all[0].id;
+        setConversationId(latestId);
+
+        const historyData = await copilotService.getConversationMessages(latestId);
+        if (historyData && historyData.length > 0) {
+          const formattedHistory = historyData.map((msg: any) => ({
+            type: msg.role === 'admin' ? 'user' : 'ai',
+            text: msg.content
+          }));
+
+          setHistory([
+            { type: 'ai', text: 'Olá Administrador. Estou analisando os dados da sua frota. Como posso ajudar hoje?' },
+            ...formattedHistory
+          ]);
+        }
       }
     } catch (error) {
       console.error('Failed to load history:', error);
@@ -43,7 +51,14 @@ export const Copilot: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await copilotService.query({ question: userQuery });
+      const response = await copilotService.query({
+        question: userQuery,
+        conversationId: conversationId || undefined
+      });
+
+      if (!conversationId && response.conversationId) {
+        setConversationId(response.conversationId);
+      }
 
       setHistory(prev => [...prev, {
         type: 'ai',

@@ -42,6 +42,7 @@ export const chatRepo = {
                 sender_admin_id: session.user.id,
                 sender_driver_id: null,
                 message: text,
+                sender_role: 'admin',
                 sent_at: new Date().toISOString()
             });
 
@@ -107,5 +108,23 @@ export const chatRepo = {
 
         if (error) throw error;
         return data.id;
+    },
+
+    async deleteThread(threadId: string) {
+        // Delete messages first
+        const { error: msgError } = await supabase
+            .from('chat_messages')
+            .delete()
+            .eq('thread_id', threadId);
+
+        if (msgError) throw msgError;
+
+        // Delete thread
+        const { error: threadError } = await supabase
+            .from('chat_threads')
+            .delete()
+            .eq('id', threadId);
+
+        if (threadError) throw threadError;
     }
 };

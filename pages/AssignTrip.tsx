@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { tripsRepo } from '../repositories/tripsRepo';
 import { driversRepo } from '../repositories/driversRepo';
 import { vehiclesRepo } from '../repositories/vehiclesRepo';
@@ -10,6 +11,7 @@ export const AssignTrip: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,23 +40,23 @@ export const AssignTrip: React.FC = () => {
     setError('');
 
     if (!selectedDriver || !selectedVehicle) {
-      setError('Motorista e veículo são obrigatórios');
+      setError(t('trips.validation.driverVehicleRequired'));
       return;
     }
 
     if (!id) {
-      setError('ID da viagem não encontrado');
+      setError(t('trips.validation.tripIdNotFound'));
       return;
     }
 
     setLoading(true);
     try {
       await tripsRepo.assignTrip(id, selectedDriver, selectedVehicle);
-      showToast('✅ Viagem atribuída com sucesso!', 'success');
+      showToast(t('trips.assignSuccess'), 'success');
       navigate('/trips');
     } catch (err: any) {
       console.error('Failed to assign trip:', err);
-      setError(err.message || 'Erro ao atribuir viagem. Tente novamente.');
+      setError(err.message || t('trips.assignError'));
     } finally {
       setLoading(false);
     }
@@ -63,15 +65,15 @@ export const AssignTrip: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-txt-tertiary mb-2">
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>Dashboard</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>{t('sidebar.overview')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/trips')}>Viagens</span>
+        <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/trips')}>{t('sidebar.trips')}</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
-        <span className="text-txt-primary">Atribuir Viagem</span>
+        <span className="text-txt-primary">{t('trips.assignTrip')}</span>
       </div>
 
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-txt-primary">Atribuir Viagem #{id}</h1>
+        <h1 className="text-2xl font-bold text-txt-primary">{t('trips.assignTripTitle', { id })}</h1>
       </div>
 
       <div className="max-w-2xl">
@@ -79,18 +81,18 @@ export const AssignTrip: React.FC = () => {
           <div>
             <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-brand-primary">assignment</span>
-              Atribuir Recursos
+              {t('trips.assignResources')}
             </h3>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Motorista</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('trips.driver')}</label>
                 <select
                   value={selectedDriver}
                   onChange={(e) => setSelectedDriver(e.target.value)}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                   required
                 >
-                  <option value="">Selecione um motorista</option>
+                  <option value="">{t('trips.selectDriver')}</option>
                   {drivers.map(driver => (
                     <option key={driver.id} value={driver.id}>
                       {driver.name} - {driver.status}
@@ -100,14 +102,14 @@ export const AssignTrip: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-txt-secondary">Veículo</label>
+                <label className="text-sm font-medium text-txt-secondary">{t('trips.vehicle')}</label>
                 <select
                   value={selectedVehicle}
                   onChange={(e) => setSelectedVehicle(e.target.value)}
                   className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                   required
                 >
-                  <option value="">Selecione um veículo</option>
+                  <option value="">{t('trips.selectVehicle')}</option>
                   {vehicles.map(vehicle => (
                     <option key={vehicle.id} value={vehicle.id}>
                       {vehicle.model} - {vehicle.plate}
@@ -131,14 +133,14 @@ export const AssignTrip: React.FC = () => {
               disabled={loading}
               className="px-6 py-2.5 rounded-lg border border-surface-border text-txt-primary hover:bg-surface-2 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-6 py-2.5 rounded-lg bg-brand-primary text-bg-main font-bold hover:bg-brand-hover transition-colors text-sm shadow-lg shadow-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'A atribuir...' : 'Atribuir Viagem'}
+              {loading ? t('common.assigning') : t('trips.assignTrip')}
             </button>
           </div>
         </form>

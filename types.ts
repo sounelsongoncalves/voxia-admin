@@ -31,6 +31,7 @@ export interface Trip {
     weight: string;
     value: string;
   };
+  createdAt?: string;
 }
 
 export interface Vehicle {

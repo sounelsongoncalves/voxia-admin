@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MENU_ITEMS } from '../constants';
 import { useAppSettings } from './AppSettingsContext';
 
@@ -11,6 +12,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     const location = useLocation();
+    const { t } = useTranslation();
 
     const { settings } = useAppSettings();
 
@@ -59,13 +61,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                                         ? 'bg-surface-2 border-brand-primary text-brand-primary font-medium'
                                         : 'border-transparent text-txt-tertiary hover:text-txt-primary hover:bg-surface-2'
                                     }`}
-                                title={!isOpen ? item.label : ''}
+                                title={!isOpen ? (item.key ? t(item.key) : item.label) : ''}
                             >
                                 <span className={`material-symbols-outlined ${isOpen ? 'mr-3' : ''} ${isActive ? 'fill-icon' : ''}`}>
                                     {item.icon}
                                 </span>
                                 <span className={`text-sm transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>
-                                    {item.label}
+                                    {item.key ? t(item.key) : item.label}
                                 </span>
                             </Link>
                         );

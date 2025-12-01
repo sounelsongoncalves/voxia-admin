@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { tripsRepo } from '../repositories/tripsRepo';
 import { Trip, Status } from '../types';
 
@@ -9,6 +10,7 @@ import { useToast } from '../components/ToastContext';
 export const TripsList: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,14 +32,14 @@ export const TripsList: React.FC = () => {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (window.confirm('Tem certeza que deseja excluir esta viagem?')) {
+    if (window.confirm(t('trips.deleteConfirmation'))) {
       try {
         await tripsRepo.deleteTrip(id);
         setTrips(trips.filter(t => t.id !== id));
-        showToast('Viagem excluída com sucesso', 'success');
+        showToast(t('trips.deleteSuccess'), 'success');
       } catch (error) {
         console.error('Failed to delete trip:', error);
-        showToast('Erro ao excluir viagem', 'error');
+        showToast(t('trips.deleteError'), 'error');
       }
     }
   };
@@ -54,19 +56,19 @@ export const TripsList: React.FC = () => {
   const filteredTrips = trips.filter(t => !statusFilter || t.status === statusFilter);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-txt-tertiary">Carregando viagens...</div>;
+    return <div className="flex items-center justify-center h-64 text-txt-tertiary">{t('trips.loading')}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-txt-primary">Gestão de Viagens</h1>
+        <h1 className="text-2xl font-bold text-txt-primary">{t('trips.title')}</h1>
         <button
           onClick={() => navigate('/trips/create')}
           className="flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-bg-main font-bold rounded-lg transition-colors shadow-lg shadow-brand-primary/20"
         >
           <span className="material-symbols-outlined">add</span>
-          Criar Viagem
+          {t('trips.create')}
         </button>
       </div>
 
@@ -77,7 +79,7 @@ export const TripsList: React.FC = () => {
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-txt-tertiary">search</span>
             <input
               type="text"
-              placeholder="Buscar por ID, Origem ou Motorista..."
+              placeholder={t('trips.searchPlaceholder')}
               className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary transition-all"
             />
           </div>
@@ -86,12 +88,12 @@ export const TripsList: React.FC = () => {
             onChange={(e) => handleFilterChange(e.target.value)}
             className="bg-bg-main border border-surface-border rounded-lg px-4 py-2.5 text-sm text-txt-primary outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary cursor-pointer"
           >
-            <option value="">Todos os Status</option>
-            <option value={Status.Active}>Ativo</option>
-            <option value={Status.Accepted}>Aceita</option>
-            <option value={Status.Completed}>Concluído</option>
-            <option value={Status.InTransit}>Em Trânsito</option>
-            <option value={Status.Warning}>Alerta</option>
+            <option value="">{t('trips.allStatus')}</option>
+            <option value={Status.Active}>{t(`statusValues.${Status.Active}`)}</option>
+            <option value={Status.Accepted}>{t(`statusValues.${Status.Accepted}`)}</option>
+            <option value={Status.Completed}>{t(`statusValues.${Status.Completed}`)}</option>
+            <option value={Status.InTransit}>{t(`statusValues.${Status.InTransit}`)}</option>
+            <option value={Status.Warning}>{t(`statusValues.${Status.Warning}`)}</option>
           </select>
         </div>
 
@@ -99,13 +101,13 @@ export const TripsList: React.FC = () => {
           <table className="w-full text-left text-sm">
             <thead className="bg-surface-3 text-txt-secondary uppercase text-xs font-semibold tracking-wider">
               <tr>
-                <th className="px-6 py-4 rounded-tl-lg">ID da Viagem</th>
-                <th className="px-6 py-4">Rota</th>
-                <th className="px-6 py-4">Motorista</th>
-                <th className="px-6 py-4">Veículo</th>
-                <th className="px-6 py-4">ETA</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right rounded-tr-lg">Ações</th>
+                <th className="px-6 py-4 rounded-tl-lg">{t('trips.table.tripId')}</th>
+                <th className="px-6 py-4">{t('table.route')}</th>
+                <th className="px-6 py-4">{t('trips.table.driver')}</th>
+                <th className="px-6 py-4">{t('trips.table.vehicle')}</th>
+                <th className="px-6 py-4">{t('trips.table.eta')}</th>
+                <th className="px-6 py-4">{t('table.status')}</th>
+                <th className="px-6 py-4 text-right rounded-tr-lg">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border bg-surface-1">
@@ -131,28 +133,28 @@ export const TripsList: React.FC = () => {
                           trip.status === Status.Warning ? 'bg-semantic-warning/10 text-semantic-warning border-semantic-warning/20' :
                             'bg-surface-3 text-txt-disabled border-surface-border'
                       }`}>
-                      {trip.status}
+                      {t(`statusValues.${trip.status}`)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         className="p-2 text-txt-tertiary hover:text-brand-primary hover:bg-surface-3 rounded-lg transition-colors"
-                        title="Editar"
+                        title={t('common.edit')}
                         onClick={(e) => { e.stopPropagation(); navigate('/trips/create'); }}
                       >
                         <span className="material-symbols-outlined text-xl">edit</span>
                       </button>
                       <button
                         className="p-2 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded-lg transition-colors"
-                        title="Excluir"
+                        title={t('common.delete')}
                         onClick={(e) => handleDelete(e, trip.id)}
                       >
                         <span className="material-symbols-outlined text-xl">delete</span>
                       </button>
                       <button
                         className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-3 rounded-lg transition-colors"
-                        title="Detalhes"
+                        title={t('common.details')}
                         onClick={(e) => { e.stopPropagation(); navigate(`/trips/${trip.id}`); }}
                       >
                         <span className="material-symbols-outlined text-xl">visibility</span>
@@ -164,7 +166,7 @@ export const TripsList: React.FC = () => {
               {filteredTrips.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-txt-tertiary">
-                    Nenhuma viagem encontrada com este filtro.
+                    {t('trips.noTripsFound')}
                   </td>
                 </tr>
               )}
@@ -174,16 +176,16 @@ export const TripsList: React.FC = () => {
 
         {/* Pagination */}
         <div className="p-4 border-t border-surface-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-txt-tertiary">
-          <span>Mostrando <span className="text-txt-primary font-bold">1-{trips.length}</span> de <span className="text-txt-primary font-bold">{trips.length}</span> viagens</span>
+          <span>{t('common.showing')} <span className="text-txt-primary font-bold">1-{trips.length}</span> {t('common.of')} <span className="text-txt-primary font-bold">{trips.length}</span> {t('common.trips')}</span>
           <div className="flex gap-2">
             <button className="px-3 py-1.5 rounded-lg border border-surface-border hover:bg-surface-2 hover:text-txt-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
-              Anterior
+              {t('common.previous')}
             </button>
             <div className="flex items-center gap-1">
               <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-primary text-bg-main font-bold">1</button>
             </div>
             <button className="px-3 py-1.5 rounded-lg border border-surface-border hover:bg-surface-2 hover:text-txt-primary transition-colors">
-              Próximo
+              {t('common.next')}
             </button>
           </div>
         </div>

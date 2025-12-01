@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { trailersRepo } from '../repositories/trailersRepo';
 import { Status } from '../types';
 import { useToast } from '../components/ToastContext';
 
 export const CreateTrailer: React.FC = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { id: routeId } = useParams();
     const [searchParams] = useSearchParams();
     const queryId = searchParams.get('id');
@@ -39,14 +40,14 @@ export const CreateTrailer: React.FC = () => {
                     }
                 } catch (err) {
                     console.error('Failed to fetch trailer:', err);
-                    showToast('Erro ao carregar dados do reboque.', 'error');
+                    showToast(t('trailers.create.validation.loadError'), 'error');
                 } finally {
                     setLoading(false);
                 }
             };
             fetchTrailer();
         }
-    }, [trailerId, showToast]);
+    }, [trailerId, showToast, t]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,7 +59,7 @@ export const CreateTrailer: React.FC = () => {
         setError('');
 
         if (!formData.plate || !formData.type) {
-            setError('Matrícula e tipo são obrigatórios');
+            setError(t('trailers.create.validation.required'));
             return;
         }
 
@@ -73,17 +74,17 @@ export const CreateTrailer: React.FC = () => {
 
             if (trailerId) {
                 await trailersRepo.updateTrailer(trailerId, trailerData);
-                showToast('✅ Reboque atualizado com sucesso!', 'success');
+                showToast(t('trailers.create.validation.updateSuccess'), 'success');
             } else {
                 await trailersRepo.createTrailer(trailerData);
-                showToast('✅ Reboque registado com sucesso!', 'success');
+                showToast(t('trailers.create.validation.createSuccess'), 'success');
             }
 
             navigate('/trailers');
         } catch (err: any) {
             console.error('Failed to save trailer:', err);
-            setError(err.message || 'Erro ao salvar reboque. Tente novamente.');
-            showToast('Erro ao salvar reboque.', 'error');
+            setError(err.message || t('trailers.create.validation.error'));
+            showToast(t('trailers.create.validation.error'), 'error');
         } finally {
             setLoading(false);
         }
@@ -95,13 +96,13 @@ export const CreateTrailer: React.FC = () => {
             <div className="flex items-center gap-2 text-sm text-txt-tertiary mb-2">
                 <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/')}>Dashboard</span>
                 <span className="material-symbols-outlined text-xs">chevron_right</span>
-                <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/trailers')}>Reboques</span>
+                <span className="cursor-pointer hover:text-txt-primary" onClick={() => navigate('/trailers')}>{t('trailers.title')}</span>
                 <span className="material-symbols-outlined text-xs">chevron_right</span>
-                <span className="text-txt-primary">{trailerId ? 'Editar Reboque' : 'Adicionar Reboque'}</span>
+                <span className="text-txt-primary">{trailerId ? t('trailers.create.editTrailer') : t('trailers.create.newTrailer')}</span>
             </div>
 
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-txt-primary">{trailerId ? 'Editar Reboque' : 'Registar Novo Reboque'}</h1>
+                <h1 className="text-2xl font-bold text-txt-primary">{trailerId ? t('trailers.create.editTrailer') : t('trailers.create.registerNew')}</h1>
             </div>
 
             <div className="max-w-3xl">
@@ -111,23 +112,23 @@ export const CreateTrailer: React.FC = () => {
                     <div>
                         <h3 className="text-lg font-bold text-txt-primary mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-brand-primary">local_shipping</span>
-                            Identificação do Reboque
+                            {t('trailers.create.identification')}
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-txt-secondary">Matrícula</label>
+                                <label className="text-sm font-medium text-txt-secondary">{t('trailers.create.plate')}</label>
                                 <input
                                     name="plate"
                                     value={formData.plate}
                                     onChange={handleChange}
                                     type="text"
-                                    placeholder="EX: REB-1234"
+                                    placeholder={t('trailers.create.platePlaceholder')}
                                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary uppercase"
                                     required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-txt-secondary">Tipo</label>
+                                <label className="text-sm font-medium text-txt-secondary">{t('trailers.create.type')}</label>
                                 <select
                                     name="type"
                                     value={formData.type}
@@ -135,37 +136,37 @@ export const CreateTrailer: React.FC = () => {
                                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                                     required
                                 >
-                                    <option value="">Selecione...</option>
-                                    <option value="Bau">Baú</option>
-                                    <option value="Sider">Sider</option>
-                                    <option value="Frigorifico">Frigorífico</option>
-                                    <option value="Prancha">Prancha</option>
-                                    <option value="Graneleiro">Graneleiro</option>
-                                    <option value="Tanque">Tanque</option>
+                                    <option value="">{t('trailers.create.selectType')}</option>
+                                    <option value="Bau">{t('trailers.types.Bau')}</option>
+                                    <option value="Sider">{t('trailers.types.Sider')}</option>
+                                    <option value="Frigorifico">{t('trailers.types.Frigorifico')}</option>
+                                    <option value="Prancha">{t('trailers.types.Prancha')}</option>
+                                    <option value="Graneleiro">{t('trailers.types.Graneleiro')}</option>
+                                    <option value="Tanque">{t('trailers.types.Tanque')}</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-txt-secondary">Capacidade (kg)</label>
+                                <label className="text-sm font-medium text-txt-secondary">{t('trailers.create.capacity')}</label>
                                 <input
                                     name="capacity_kg"
                                     value={formData.capacity_kg}
                                     onChange={handleChange}
                                     type="number"
-                                    placeholder="EX: 25000"
+                                    placeholder={t('trailers.create.capacityPlaceholder')}
                                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-txt-secondary">Status</label>
+                                <label className="text-sm font-medium text-txt-secondary">{t('trailers.create.status')}</label>
                                 <select
                                     name="status"
                                     value={formData.status}
                                     onChange={handleChange}
                                     className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 px-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none"
                                 >
-                                    <option value={Status.Active}>Ativo</option>
-                                    <option value={Status.Inactive}>Inativo</option>
-                                    <option value={Status.Error}>Em Manutenção</option>
+                                    <option value={Status.Active}>{t('statusValues.Ativo')}</option>
+                                    <option value={Status.Inactive}>{t('statusValues.Inativo')}</option>
+                                    <option value={Status.Error}>{t('statusValues.Erro')}</option>
                                 </select>
                             </div>
                         </div>
@@ -186,14 +187,14 @@ export const CreateTrailer: React.FC = () => {
                             disabled={loading}
                             className="px-6 py-2.5 rounded-lg border border-surface-border text-txt-primary hover:bg-surface-2 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Cancelar
+                            {t('trailers.create.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
                             className="px-6 py-2.5 rounded-lg bg-brand-primary text-bg-main font-bold hover:bg-brand-hover transition-colors text-sm shadow-lg shadow-brand-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {loading ? 'A guardar...' : (trailerId ? 'Atualizar Reboque' : 'Guardar Reboque')}
+                            {loading ? t('trailers.create.saving') : (trailerId ? t('trailers.create.update') : t('trailers.create.save'))}
                         </button>
                     </div>
                 </form>

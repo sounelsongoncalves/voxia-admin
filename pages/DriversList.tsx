@@ -1,6 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { driversRepo } from '../repositories/driversRepo';
 import { Driver, Status } from '../types';
 
@@ -8,6 +8,7 @@ import { useToast } from '../components/ToastContext';
 
 export const DriversList: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -33,14 +34,14 @@ export const DriversList: React.FC = () => {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (window.confirm('Tem certeza que deseja excluir este motorista?')) {
+    if (window.confirm(t('drivers.deleteConfirm'))) {
       try {
         await driversRepo.deleteDriver(id);
         setDrivers(drivers.filter(d => d.id !== id));
-        showToast('Motorista excluído com sucesso', 'success');
+        showToast(t('drivers.deleteSuccess'), 'success');
       } catch (error) {
         console.error('Failed to delete driver:', error);
-        showToast('Erro ao excluir motorista', 'error');
+        showToast(t('drivers.deleteError'), 'error');
       }
     }
   };
@@ -81,15 +82,15 @@ export const DriversList: React.FC = () => {
       {/* Page Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-txt-primary">Gestão de Motoristas</h1>
-          <p className="text-sm text-txt-tertiary mt-1">Visualize e gerencie o desempenho e status dos motoristas.</p>
+          <h1 className="text-2xl font-bold text-txt-primary">{t('drivers.title')}</h1>
+          <p className="text-sm text-txt-tertiary mt-1">{t('drivers.subtitle')}</p>
         </div>
         <button
           onClick={() => navigate('/drivers/create')}
           className="flex items-center gap-2 px-4 py-2 bg-brand-primary hover:bg-brand-hover text-bg-main font-bold rounded-lg transition-colors shadow-lg shadow-brand-primary/20"
         >
           <span className="material-symbols-outlined">person_add</span>
-          Adicionar Motorista
+          {t('drivers.addDriver')}
         </button>
       </div>
 
@@ -103,7 +104,7 @@ export const DriversList: React.FC = () => {
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-txt-tertiary">search</span>
               <input
                 type="text"
-                placeholder="Buscar por Nome ou ID..."
+                placeholder={t('drivers.searchPlaceholder')}
                 className="w-full bg-bg-main border border-surface-border rounded-lg py-2.5 pl-10 pr-4 text-sm text-txt-primary focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none placeholder-txt-tertiary transition-all"
               />
             </div>
@@ -112,15 +113,15 @@ export const DriversList: React.FC = () => {
               onChange={(e) => handleFilterChange(e.target.value)}
               className="bg-bg-main border border-surface-border rounded-lg px-4 py-2.5 text-sm text-txt-primary outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary cursor-pointer"
             >
-              <option value="">Todos os Status</option>
-              <option value={Status.Active}>Ativo</option>
-              <option value={Status.Inactive}>Inativo</option>
-              <option value={Status.Warning}>Alerta</option>
+              <option value="">{t('drivers.allStatus')}</option>
+              <option value={Status.Active}>{t('statusValues.Ativo')}</option>
+              <option value={Status.Inactive}>{t('statusValues.Inativo')}</option>
+              <option value={Status.Warning}>{t('statusValues.Alerta')}</option>
             </select>
           </div>
 
           <div className="flex gap-2">
-            <button className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-2 rounded-lg transition-colors" title="Exportar">
+            <button className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-2 rounded-lg transition-colors" title={t('maintenance.exportCsv')}>
               <span className="material-symbols-outlined">download</span>
             </button>
             <button className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-2 rounded-lg transition-colors" title="Filtros Avançados">
@@ -134,25 +135,25 @@ export const DriversList: React.FC = () => {
           <table className="w-full text-left text-sm">
             <thead className="bg-surface-3 text-txt-secondary uppercase text-xs font-semibold tracking-wider">
               <tr>
-                <th className="px-6 py-4 rounded-tl-lg">Motorista</th>
-                <th className="px-6 py-4">ID</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Avaliação</th>
-                <th className="px-6 py-4">Viagens</th>
-                <th className="px-6 py-4 text-right rounded-tr-lg">Ações</th>
+                <th className="px-6 py-4 rounded-tl-lg">{t('drivers.table.driver')}</th>
+                <th className="px-6 py-4">{t('drivers.table.id')}</th>
+                <th className="px-6 py-4">{t('drivers.table.status')}</th>
+                <th className="px-6 py-4">{t('drivers.table.rating')}</th>
+                <th className="px-6 py-4">{t('drivers.table.trips')}</th>
+                <th className="px-6 py-4 text-right rounded-tr-lg">{t('drivers.table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border bg-surface-1">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-txt-tertiary">
-                    Carregando motoristas...
+                    {t('drivers.loading')}
                   </td>
                 </tr>
               ) : filteredDrivers.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-txt-tertiary">
-                    Nenhum motorista encontrado com este filtro
+                    {t('drivers.noDrivers')}
                   </td>
                 </tr>
               ) : (
@@ -183,7 +184,7 @@ export const DriversList: React.FC = () => {
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(driver.status)}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${getStatusDotColor(driver.status)}`}></span>
-                        {driver.status}
+                        {t(`statusValues.${driver.status}`, driver.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -194,28 +195,28 @@ export const DriversList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-txt-primary font-medium">{driver.tripsCompleted}</span>
-                      <span className="text-txt-tertiary text-xs ml-1">concluídas</span>
+                      <span className="text-txt-tertiary text-xs ml-1">{t('drivers.table.completed')}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/drivers/create?id=${driver.id}&mode=edit`); }}
                           className="p-2 text-txt-tertiary hover:text-brand-primary hover:bg-surface-3 rounded-lg transition-colors"
-                          title="Editar"
+                          title={t('common.edit')}
                         >
                           <span className="material-symbols-outlined text-xl">edit</span>
                         </button>
                         <button
                           onClick={(e) => handleDelete(e, driver.id)}
                           className="p-2 text-txt-tertiary hover:text-semantic-error hover:bg-semantic-error/10 rounded-lg transition-colors"
-                          title="Excluir"
+                          title={t('common.delete')}
                         >
                           <span className="material-symbols-outlined text-xl">delete</span>
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate(`/drivers/${driver.id}`); }}
                           className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-3 rounded-lg transition-colors"
-                          title="Ver Perfil"
+                          title={t('common.view')}
                         >
                           <span className="material-symbols-outlined text-xl">visibility</span>
                         </button>
@@ -230,7 +231,7 @@ export const DriversList: React.FC = () => {
 
         {/* Pagination */}
         <div className="p-4 border-t border-surface-border flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-txt-tertiary">
-          <span>Mostrando <span className="text-txt-primary font-bold">1-{drivers.length}</span> de <span className="text-txt-primary font-bold">{drivers.length}</span> motoristas</span>
+          <span>{t('maintenance.showing', { count: drivers.length })}</span>
           <div className="flex gap-2">
             <button className="px-3 py-1.5 rounded-lg border border-surface-border hover:bg-surface-2 hover:text-txt-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
               Anterior
