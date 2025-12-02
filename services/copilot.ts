@@ -142,10 +142,10 @@ export const copilotService = {
 
     getSuggestions(): string[] {
         return [
-            'Quantas viagens ativas temos agora?',
-            'Qual a eficiência média de combustível da frota?',
-            'Mostre os motoristas com melhor taxa de pontualidade',
-            'Quais veículos precisam de manutenção?',
+            'copilot.suggestions.activeTrips',
+            'copilot.suggestions.fuelEfficiency',
+            'copilot.suggestions.punctuality',
+            'copilot.suggestions.maintenance',
         ];
     }
 };

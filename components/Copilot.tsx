@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { copilotService } from '../services/copilot';
 
 export const Copilot: React.FC = () => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [history, setHistory] = useState<{ type: 'user' | 'ai', text: string, cards?: any[], tables?: any[] }[]>([
-    { type: 'ai', text: 'Olá Administrador. Estou analisando os dados da sua frota. Como posso ajudar hoje?' }
+    { type: 'ai', text: t('copilot.welcomeMessage') }
   ]);
 
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export const Copilot: React.FC = () => {
           }));
 
           setHistory([
-            { type: 'ai', text: 'Olá Administrador. Estou analisando os dados da sua frota. Como posso ajudar hoje?' },
+            { type: 'ai', text: t('copilot.welcomeMessage') },
             ...formattedHistory
           ]);
         }
@@ -74,7 +76,7 @@ export const Copilot: React.FC = () => {
       console.error('Copilot error:', error);
       setHistory(prev => [...prev, {
         type: 'ai',
-        text: 'Desculpe, ocorreu um erro ao processar sua consulta. Por favor, tente novamente.'
+        text: t('copilot.errorMessage')
       }]);
     } finally {
       setLoading(false);
@@ -82,7 +84,12 @@ export const Copilot: React.FC = () => {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    setQuery(suggestion);
+    // If suggestion is a key, translate it before sending/setting query
+    // But usually we want to send the translated text to the AI?
+    // Or does the AI understand the key? No.
+    // So we should translate it here.
+    const text = t(suggestion);
+    setQuery(text);
   };
 
   return (
@@ -104,7 +111,7 @@ export const Copilot: React.FC = () => {
         <div className="h-16 flex items-center justify-between px-6 border-b border-surface-border bg-surface-3">
           <div className="flex items-center">
             <span className="material-symbols-outlined text-brand-primary mr-2">smart_toy</span>
-            <h2 className="font-bold text-txt-primary">IA Voxia</h2>
+            <h2 className="font-bold text-txt-primary">{t('copilot.title')}</h2>
           </div>
           <button onClick={() => setIsOpen(false)} className="text-txt-tertiary hover:text-txt-primary">
             <span className="material-symbols-outlined">close</span>
@@ -133,7 +140,7 @@ export const Copilot: React.FC = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Pergunte sobre sua frota..."
+              placeholder={t('copilot.placeholder')}
               className="w-full bg-surface-1 text-txt-primary text-sm rounded-xl pl-4 pr-10 py-3 border border-surface-border focus:border-brand-primary focus:outline-none placeholder-txt-tertiary"
             />
             <button
@@ -150,7 +157,7 @@ export const Copilot: React.FC = () => {
                 onClick={() => handleSuggestionClick(suggestion)}
                 className="text-[10px] text-txt-tertiary whitespace-nowrap px-2 py-1 rounded bg-surface-1 border border-surface-border hover:border-brand-primary hover:text-brand-primary cursor-pointer transition-colors"
               >
-                {suggestion}
+                {t(suggestion)}
               </span>
             ))}
           </div>

@@ -47,6 +47,18 @@
         "settings": "Configurações",
         "logout": "Sair"
     },
+    "copilot": {
+        "title": "IA Voxia",
+        "welcomeMessage": "Olá Administrador. Estou analisando os dados da sua frota. Como posso ajudar hoje?",
+        "placeholder": "Pergunte sobre sua frota...",
+        "errorMessage": "Desculpe, ocorreu um erro ao processar sua consulta. Por favor, tente novamente.",
+        "suggestions": {
+            "activeTrips": "Quantas viagens ativas temos agora?",
+            "fuelEfficiency": "Qual a eficiência média de combustível da frota?",
+            "punctuality": "Mostre os motoristas com melhor taxa de pontualidade",
+            "maintenance": "Quais veículos precisam de manutenção?"
+        }
+    },
     "dashboard": {
         "title": "Visão Geral",
         "downloadReport": "Descarregar Relatório",
