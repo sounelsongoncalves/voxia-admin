@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { alertsRepo } from '../repositories/alertsRepo';
 import { Alert } from '../types';
 import { useToast } from '../components/ToastContext';
 
 export const Alerts: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<'All' | 'Critical' | 'Warning' | 'Info'>('All');
@@ -64,14 +66,14 @@ export const Alerts: React.FC = () => {
   };
 
   const handleResolve = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja marcar este alerta como resolvido?')) {
+    if (window.confirm(t('alerts.confirmResolve'))) {
       try {
         await alertsRepo.resolveAlert(id);
         setAlerts(prev => prev.filter(a => a.id !== id));
-        showToast('Alerta resolvido com sucesso!', 'success');
+        showToast(t('alerts.resolveSuccess'), 'success');
       } catch (error) {
         console.error('Failed to resolve alert:', error);
-        showToast('Erro ao resolver alerta. Tente novamente.', 'error');
+        showToast(t('alerts.resolveError'), 'error');
       }
     }
   };
@@ -79,11 +81,12 @@ export const Alerts: React.FC = () => {
   const handleArchive = async (id: string) => {
     try {
       await alertsRepo.resolveAlert(id);
+      await alertsRepo.resolveAlert(id);
       setAlerts(prev => prev.filter(a => a.id !== id));
-      showToast('Alerta arquivado com sucesso!', 'success');
+      showToast(t('alerts.archiveSuccess'), 'success');
     } catch (error) {
       console.error('Failed to archive alert:', error);
-      showToast('Erro ao arquivar alerta.', 'error');
+      showToast(t('alerts.archiveError'), 'error');
     }
   };
 
@@ -143,14 +146,14 @@ export const Alerts: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-txt-primary">Central de Alertas</h1>
-          <p className="text-sm text-txt-tertiary mt-1">Monitore e gerencie notificações importantes da frota em tempo real.</p>
+          <h1 className="text-2xl font-bold text-txt-primary">{t('alerts.title')}</h1>
+          <p className="text-sm text-txt-tertiary mt-1">{t('alerts.subtitle')}</p>
         </div>
         <button
-          onClick={() => showToast('Todos os alertas marcados como lidos.', 'success')}
+          onClick={() => showToast(t('alerts.allMarkedRead'), 'success')}
           className="text-sm text-brand-primary hover:underline"
         >
-          Marcar todos como lidos
+          {t('alerts.markAllRead')}
         </button>
       </div>
 
@@ -162,7 +165,7 @@ export const Alerts: React.FC = () => {
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-semantic-error"></div>
           <div>
-            <p className="text-txt-tertiary text-xs font-medium uppercase tracking-wider">Críticos</p>
+            <p className="text-txt-tertiary text-xs font-medium uppercase tracking-wider">{t('alerts.types.critical')}</p>
             <p className="text-3xl font-bold text-txt-primary mt-1">{counts.Critical}</p>
           </div>
           <div className="p-3 rounded-lg bg-semantic-error/10 text-semantic-error">
@@ -175,7 +178,7 @@ export const Alerts: React.FC = () => {
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-semantic-warning"></div>
           <div>
-            <p className="text-txt-tertiary text-xs font-medium uppercase tracking-wider">Avisos</p>
+            <p className="text-txt-tertiary text-xs font-medium uppercase tracking-wider">{t('alerts.types.warning')}</p>
             <p className="text-3xl font-bold text-txt-primary mt-1">{counts.Warning}</p>
           </div>
           <div className="p-3 rounded-lg bg-semantic-warning/10 text-semantic-warning">
@@ -188,7 +191,7 @@ export const Alerts: React.FC = () => {
         >
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-semantic-info"></div>
           <div>
-            <p className="text-txt-tertiary text-xs font-medium uppercase tracking-wider">Informativos</p>
+            <p className="text-txt-tertiary text-xs font-medium uppercase tracking-wider">{t('alerts.types.info')}</p>
             <p className="text-3xl font-bold text-txt-primary mt-1">{counts.Info}</p>
           </div>
           <div className="p-3 rounded-lg bg-semantic-info/10 text-semantic-info">
@@ -209,13 +212,13 @@ export const Alerts: React.FC = () => {
                 : 'text-txt-tertiary hover:text-txt-primary hover:bg-surface-2 border border-transparent'
                 }`}
             >
-              {type === 'All' ? 'Todos os Tipos' : type === 'Critical' ? 'Críticos' : type === 'Warning' ? 'Avisos' : 'Informativos'}
+              {type === 'All' ? t('alerts.types.all') : type === 'Critical' ? t('alerts.types.critical') : type === 'Warning' ? t('alerts.types.warning') : t('alerts.types.info')}
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-txt-tertiary">Status:</span>
+          <span className="text-sm text-txt-tertiary">{t('alerts.status.label')}</span>
           <div className="flex bg-surface-2 rounded-lg p-1 border border-surface-border">
             {(['All', 'Open', 'Resolved'] as const).map((status) => (
               <button
@@ -226,7 +229,7 @@ export const Alerts: React.FC = () => {
                   : 'text-txt-tertiary hover:text-txt-primary'
                   }`}
               >
-                {status === 'All' ? 'Todos' : status === 'Open' ? 'Abertos' : 'Resolvidos'}
+                {status === 'All' ? t('alerts.status.all') : status === 'Open' ? t('alerts.status.open') : t('alerts.status.resolved')}
               </button>
             ))}
           </div>
@@ -251,7 +254,7 @@ export const Alerts: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${colors.text} ${colors.border} ${colors.badgeBg}`}>
-                      {alert.type === 'Critical' ? 'Crítico' : alert.type === 'Warning' ? 'Aviso' : 'Info'}
+                      {alert.type === 'Critical' ? t('alerts.card.critical') : alert.type === 'Warning' ? t('alerts.card.warning') : t('alerts.card.info')}
                     </span>
                     <span className="text-xs text-txt-tertiary flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">schedule</span>
@@ -265,7 +268,7 @@ export const Alerts: React.FC = () => {
                       className="flex items-center gap-1 mt-1 text-xs text-brand-primary cursor-pointer hover:underline w-fit"
                     >
                       <span className="material-symbols-outlined text-[14px]">local_shipping</span>
-                      Veículo: {alert.vehicleId}
+                      {t('alerts.card.vehicle')} {alert.vehicleId}
                     </div>
                   )}
                 </div>
@@ -275,14 +278,14 @@ export const Alerts: React.FC = () => {
                   <button
                     onClick={() => handleViewOnMap(alert.vehicleId)}
                     className="p-2 text-txt-tertiary hover:text-brand-primary hover:bg-surface-3 rounded-lg transition-colors"
-                    title="Ver no Mapa"
+                    title={t('alerts.actions.viewMap')}
                   >
                     <span className="material-symbols-outlined">map</span>
                   </button>
                   <button
                     onClick={() => handleArchive(alert.id)}
                     className="p-2 text-txt-tertiary hover:text-txt-primary hover:bg-surface-3 rounded-lg transition-colors"
-                    title="Arquivar"
+                    title={t('alerts.actions.archive')}
                   >
                     <span className="material-symbols-outlined">archive</span>
                   </button>
@@ -290,7 +293,7 @@ export const Alerts: React.FC = () => {
                     onClick={() => toggleContext(alert.id)}
                     className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 text-white text-sm font-medium leading-normal transition-colors ${isContextOpen ? 'bg-surface-3' : 'bg-surface-2 hover:bg-brand-primary'}`}
                   >
-                    <span className="truncate">{isContextOpen ? 'Fechar Contexto' : 'Abrir Contexto'}</span>
+                    <span className="truncate">{isContextOpen ? t('alerts.actions.closeContext') : t('alerts.actions.openContext')}</span>
                   </button>
                 </div>
               </div>
@@ -298,23 +301,23 @@ export const Alerts: React.FC = () => {
               {/* Context Panel */}
               {isContextOpen && (
                 <div className="p-6 bg-surface-2 rounded-xl border border-brand-primary/50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <h3 className="text-xl font-bold text-txt-primary mb-1">Contexto do Alerta</h3>
-                  <p className="text-txt-secondary text-sm mb-4">ID: {alert.id} | Status: Pendente</p>
+                  <h3 className="text-xl font-bold text-txt-primary mb-1">{t('alerts.context.title')}</h3>
+                  <p className="text-txt-secondary text-sm mb-4">ID: {alert.id} | {t('alerts.context.status')}</p>
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="flex-1">
-                      <h4 className="text-txt-primary font-semibold mb-2">Detalhes Operacionais</h4>
+                      <h4 className="text-txt-primary font-semibold mb-2">{t('alerts.context.operationalDetails')}</h4>
                       <div className="space-y-2">
-                        <p className="text-txt-secondary text-sm"><span className="font-medium text-txt-primary/80">Ocorrência:</span> {alert.message}</p>
-                        <p className="text-txt-secondary text-sm"><span className="font-medium text-txt-primary/80">Veículo:</span> {alert.vehicleId || 'N/A'}</p>
+                        <p className="text-txt-secondary text-sm"><span className="font-medium text-txt-primary/80">{t('alerts.context.occurrence')}</span> {alert.message}</p>
+                        <p className="text-txt-secondary text-sm"><span className="font-medium text-txt-primary/80">{t('alerts.card.vehicle')}</span> {alert.vehicleId || 'N/A'}</p>
                         <p className="text-semantic-warning text-sm mt-2 bg-semantic-warning/10 p-2 rounded border border-semantic-warning/20">
-                          <span className="font-bold">Sugestão IA:</span> Verifique o histórico de manutenção recente deste veículo.
+                          <span className="font-bold">{t('alerts.context.aiSuggestion')}</span> {t('alerts.context.aiSuggestionText')}
                         </p>
                       </div>
                       <button
                         onClick={() => handleResolve(alert.id)}
                         className="mt-4 flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-brand-primary text-white text-sm font-bold leading-normal hover:bg-brand-hover transition-colors"
                       >
-                        <span className="truncate">Marcar como Resolvido</span>
+                        <span className="truncate">{t('alerts.context.resolve')}</span>
                       </button>
                     </div>
                     <div className="flex-1 bg-center bg-no-repeat aspect-video bg-cover rounded-lg border border-surface-border" data-alt="Map showing context" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBun42w_vOShq2iYOjhN8ameFvzUHqrWhp2xc39_lCeaOS14betEvb7rL_ImoU20b3LODFSAJ3DLEso9yTF0Ebst8GpZjzsX7BQKpHmGD_Bv6ITZYvhtozcRIYVtDaMqbnvfqdd2FMjPWsiIHwmSqTm80-0BtB6ohS81QCzpCSm_HTXbnkSf5VdITm8npNV-AYrGrzAD3vyJHALXFS237GRbCqnz6qcHffmlSJj-lpUKdR_xO_czzbbCTbzV5joEI8jtA3YZd9ReuIn")' }}></div>
@@ -330,8 +333,8 @@ export const Alerts: React.FC = () => {
             <div className="p-4 bg-surface-2 rounded-full mb-3">
               <span className="material-symbols-outlined text-4xl text-txt-disabled">notifications_off</span>
             </div>
-            <p className="text-txt-primary font-medium">Tudo limpo por aqui!</p>
-            <p className="text-txt-tertiary text-sm mt-1">Nenhum alerta encontrado nesta categoria.</p>
+            <p className="text-txt-primary font-medium">{t('alerts.empty.title')}</p>
+            <p className="text-txt-tertiary text-sm mt-1">{t('alerts.empty.subtitle')}</p>
           </div>
         )}
       </div>

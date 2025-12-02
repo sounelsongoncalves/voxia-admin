@@ -31,6 +31,8 @@ export const CreateTrip: React.FC = () => {
     tempRear: '',
     jobDescription: ''
   });
+  const [estimatedDistance, setEstimatedDistance] = useState<number | null>(null);
+  const [estimatedTime, setEstimatedTime] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,6 +51,30 @@ export const CreateTrip: React.FC = () => {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (formData.origin && formData.destination) {
+      // Deterministic pseudo-random calculation based on input strings
+      const str = formData.origin.toLowerCase() + formData.destination.toLowerCase();
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+
+      // Generate realistic looking distance between 50km and 800km
+      const distance = Math.abs(hash % 750) + 50;
+      setEstimatedDistance(distance);
+
+      // Calculate time assuming avg speed of 70km/h
+      const totalMinutes = Math.round((distance / 70) * 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      setEstimatedTime(`${hours}h ${minutes}min`);
+    } else {
+      setEstimatedDistance(null);
+      setEstimatedTime('');
+    }
+  }, [formData.origin, formData.destination]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -345,11 +371,11 @@ export const CreateTrip: React.FC = () => {
               <div className="absolute bottom-4 left-4 right-4 bg-surface-1/90 backdrop-blur-sm border border-surface-border p-3 rounded-lg shadow-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs text-txt-tertiary">{t('trips.estimatedDistance')}</span>
-                  <span className="text-sm font-bold text-txt-primary">452 km</span>
+                  <span className="text-sm font-bold text-txt-primary">{estimatedDistance ? `${estimatedDistance} km` : '--'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-txt-tertiary">{t('trips.estimatedTime')}</span>
-                  <span className="text-sm font-bold text-txt-primary">6h 45min</span>
+                  <span className="text-sm font-bold text-txt-primary">{estimatedTime || '--'}</span>
                 </div>
               </div>
             </div>

@@ -6,10 +6,12 @@ import { vehiclesRepo } from '../repositories/vehiclesRepo';
 import { Status } from '../types';
 
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/ToastContext';
 
 export const Reports: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [fuelData, setFuelData] = useState<any[]>([]);
@@ -100,7 +102,7 @@ export const Reports: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-txt-tertiary">Carregando relatórios...</p>
+        <p className="text-txt-tertiary">{t('reports.loading')}</p>
       </div>
     );
   }
@@ -110,12 +112,12 @@ export const Reports: React.FC = () => {
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-txt-primary">Relatórios e Analytics</h1>
-          <p className="text-sm text-txt-tertiary mt-1">Análise detalhada de performance, custos e segurança da frota.</p>
+          <h1 className="text-2xl font-bold text-txt-primary">{t('reports.title')}</h1>
+          <p className="text-sm text-txt-tertiary mt-1">{t('reports.subtitle')}</p>
         </div>
         <div className="flex gap-3">
           <div className="flex bg-surface-1 rounded-lg p-1 border border-surface-border">
-            {['7 Dias', '30 Dias', 'Este Mês', 'Ano'].map((period, idx) => (
+            {[t('reports.periods.7days'), t('reports.periods.30days'), t('reports.periods.thisMonth'), t('reports.periods.year')].map((period, idx) => (
               <button
                 key={period}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${idx === 1
@@ -128,11 +130,11 @@ export const Reports: React.FC = () => {
             ))}
           </div>
           <button
-            onClick={() => showToast('Exportação de relatório iniciada. O download começará em breve.', 'success')}
+            onClick={() => showToast(t('reports.export.success'), 'success')}
             className="flex items-center gap-2 px-4 py-2 bg-surface-1 hover:bg-surface-2 border border-surface-border text-txt-primary text-sm font-medium rounded-lg transition-colors"
           >
             <span className="material-symbols-outlined text-lg">download</span>
-            Exportar
+            {t('reports.export.button')}
           </button>
         </div>
       </div>
@@ -140,7 +142,7 @@ export const Reports: React.FC = () => {
       {/* KPI Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title="Custo Est. Combustível"
+          title={t('reports.kpi.fuelCost')}
           value={`R$ ${kpis.totalFuelCost.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`}
           trend="+2.4%"
           trendUp={false}
@@ -148,7 +150,7 @@ export const Reports: React.FC = () => {
           color="error"
         />
         <StatsCard
-          title="KM Total Percorrido"
+          title={t('reports.kpi.totalKm')}
           value={`${kpis.totalKm.toLocaleString('pt-BR')} km`}
           trend="+12%"
           trendUp={true}
@@ -156,7 +158,7 @@ export const Reports: React.FC = () => {
           color="primary"
         />
         <StatsCard
-          title="Pontuação de Segurança"
+          title={t('reports.kpi.safetyScore')}
           value={`${kpis.safetyScore}/100`}
           trend="+1.5pts"
           trendUp={true}
@@ -164,9 +166,9 @@ export const Reports: React.FC = () => {
           color="info"
         />
         <StatsCard
-          title="Veículos em Manutenção"
+          title={t('reports.kpi.maintenance')}
           value={kpis.maintenanceCount.toString()}
-          trend="Dentro do esperado"
+          trend={t('reports.kpi.expected')}
           trendUp={true}
           icon="build"
           color="warning"
@@ -178,11 +180,11 @@ export const Reports: React.FC = () => {
         {/* Fuel Efficiency Chart Simulation */}
         <div className="lg:col-span-2 bg-surface-1 border border-surface-border rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-txt-primary">Consumo de Combustível (L/100km)</h3>
+            <h3 className="text-lg font-bold text-txt-primary">{t('reports.charts.fuelConsumption')}</h3>
             <select className="bg-bg-main border border-surface-border rounded-lg px-3 py-1.5 text-xs text-txt-primary outline-none">
-              <option>Todos os Veículos</option>
-              <option>Pesados</option>
-              <option>Médios</option>
+              <option>{t('reports.charts.vehicleTypes.all')}</option>
+              <option>{t('reports.charts.vehicleTypes.heavy')}</option>
+              <option>{t('reports.charts.vehicleTypes.medium')}</option>
             </select>
           </div>
 
@@ -201,7 +203,7 @@ export const Reports: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] text-txt-tertiary mt-2">{['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][index]}</span>
+                <span className="text-[10px] text-txt-tertiary mt-2">{(t('reports.charts.months', { returnObjects: true }) as string[])[index]}</span>
               </div>
             ))}
           </div>
@@ -209,12 +211,12 @@ export const Reports: React.FC = () => {
 
         {/* Fleet Status / Distribution */}
         <div className="bg-surface-1 border border-surface-border rounded-xl p-6">
-          <h3 className="text-lg font-bold text-txt-primary mb-6">Distribuição da Frota</h3>
+          <h3 className="text-lg font-bold text-txt-primary mb-6">{t('reports.fleetDistribution.title')}</h3>
 
           <div className="space-y-6">
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-txt-secondary">Em Trânsito</span>
+                <span className="text-txt-secondary">{t('reports.fleetDistribution.inTransit')}</span>
                 <span className="text-txt-primary font-bold">
                   {fleetStats.total > 0 ? Math.round((fleetStats.inTransit / fleetStats.total) * 100) : 0}%
                 </span>
@@ -226,7 +228,7 @@ export const Reports: React.FC = () => {
 
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-txt-secondary">Parados / Inativos</span>
+                <span className="text-txt-secondary">{t('reports.fleetDistribution.stopped')}</span>
                 <span className="text-txt-primary font-bold">
                   {fleetStats.total > 0 ? Math.round((fleetStats.stopped / fleetStats.total) * 100) : 0}%
                 </span>
@@ -238,7 +240,7 @@ export const Reports: React.FC = () => {
 
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-txt-secondary">Manutenção</span>
+                <span className="text-txt-secondary">{t('reports.fleetDistribution.maintenance')}</span>
                 <span className="text-txt-primary font-bold">
                   {fleetStats.total > 0 ? Math.round((fleetStats.maintenance / fleetStats.total) * 100) : 0}%
                 </span>
@@ -250,7 +252,7 @@ export const Reports: React.FC = () => {
 
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-txt-secondary">Disponível</span>
+                <span className="text-txt-secondary">{t('reports.fleetDistribution.available')}</span>
                 <span className="text-txt-primary font-bold">
                   {fleetStats.total > 0 ? Math.round((fleetStats.available / fleetStats.total) * 100) : 0}%
                 </span>
@@ -264,10 +266,10 @@ export const Reports: React.FC = () => {
           <div className="mt-8 p-4 bg-surface-2 rounded-lg border border-surface-border">
             <h4 className="text-sm font-bold text-txt-primary mb-2 flex items-center gap-2">
               <span className="material-symbols-outlined text-brand-primary text-lg">lightbulb</span>
-              Insight do Copiloto
+              {t('reports.copilot.title')}
             </h4>
             <p className="text-xs text-txt-secondary leading-relaxed">
-              A eficiência de combustível caiu 1.2% nos finais de semana. Considere revisar as rotas de sábado para evitar congestionamentos locais.
+              {t('reports.copilot.text')}
             </p>
           </div>
         </div>
@@ -276,25 +278,25 @@ export const Reports: React.FC = () => {
       {/* Detailed Table */}
       <div className="bg-surface-1 border border-surface-border rounded-xl overflow-hidden">
         <div className="p-6 border-b border-surface-border">
-          <h3 className="text-lg font-bold text-txt-primary">Performance por Motorista</h3>
+          <h3 className="text-lg font-bold text-txt-primary">{t('reports.driverPerformance.title')}</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-surface-3 text-txt-secondary uppercase text-xs font-semibold tracking-wider">
               <tr>
-                <th className="px-6 py-4">Motorista</th>
-                <th className="px-6 py-4 text-center">Viagens</th>
-                <th className="px-6 py-4 text-center">KM Total</th>
-                <th className="px-6 py-4 text-center">Segurança</th>
-                <th className="px-6 py-4 text-center">Eficiência</th>
-                <th className="px-6 py-4 text-right">Status</th>
+                <th className="px-6 py-4">{t('reports.driverPerformance.table.driver')}</th>
+                <th className="px-6 py-4 text-center">{t('reports.driverPerformance.table.trips')}</th>
+                <th className="px-6 py-4 text-center">{t('reports.driverPerformance.table.totalKm')}</th>
+                <th className="px-6 py-4 text-center">{t('reports.driverPerformance.table.safety')}</th>
+                <th className="px-6 py-4 text-center">{t('reports.driverPerformance.table.efficiency')}</th>
+                <th className="px-6 py-4 text-right">{t('reports.driverPerformance.table.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border bg-surface-1">
               {driverStats.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-txt-tertiary">
-                    Nenhum dado de performance disponível
+                    {t('reports.driverPerformance.table.empty')}
                   </td>
                 </tr>
               ) : (
@@ -336,7 +338,7 @@ export const Reports: React.FC = () => {
                         onClick={() => navigate(`/drivers/${driver.id}`)}
                         className="text-brand-primary hover:text-brand-hover text-xs font-medium hover:underline"
                       >
-                        Ver Detalhes
+                        {t('reports.driverPerformance.table.details')}
                       </button>
                     </td>
                   </tr>

@@ -1,22 +1,15 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-interface FileItem {
-    id: string;
-    name: string;
-    type: 'folder' | 'pdf' | 'jpg' | 'docx' | 'pptx' | 'xlsx' | 'png' | 'jpeg' | 'gif' | 'unknown';
-    size: string;
-    date: string;
-    url?: string; // For preview
-    sharedWith?: { name: string; avatar: string }[];
-    folderId?: string; // ID of the parent folder
-}
+import { FileItem } from '../types';
 
-const FOLDERS: FileItem[] = [
-    { id: 'f1', name: 'Arquivos do Projeto', type: 'folder', size: '21.8 MB', date: 'Feb 19, 2025' },
-    { id: 'f2', name: 'Documentos', type: 'folder', size: '10.5 MB', date: 'Feb 18, 2025' },
-    { id: 'f3', name: 'Recursos da Equipe', type: 'folder', size: '783.1 kB', date: 'Feb 15, 2025' },
-    { id: 'f4', name: 'Dados do Cliente', type: 'folder', size: '5.4 MB', date: 'Feb 10, 2025' },
-    { id: 'f5', name: 'Arquivos de Backup', type: 'folder', size: '2.5 MB', date: 'Feb 01, 2025' },
+const getFolders = (t: any): FileItem[] => [
+    { id: 'received', name: t('files.defaultFolders.received'), type: 'folder', size: '3 itens', date: new Date().toLocaleDateString() },
+    { id: 'f1', name: t('files.defaultFolders.projectFiles'), type: 'folder', size: '21.8 MB', date: 'Feb 19, 2025' },
+    { id: 'f2', name: t('files.defaultFolders.documents'), type: 'folder', size: '10.5 MB', date: 'Feb 18, 2025' },
+    { id: 'f3', name: t('files.defaultFolders.teamResources'), type: 'folder', size: '783.1 kB', date: 'Feb 15, 2025' },
+    { id: 'f4', name: t('files.defaultFolders.clientData'), type: 'folder', size: '5.4 MB', date: 'Feb 10, 2025' },
+    { id: 'f5', name: t('files.defaultFolders.backupFiles'), type: 'folder', size: '2.5 MB', date: 'Feb 01, 2025' },
 ];
 
 const FILES: FileItem[] = [
@@ -57,16 +50,38 @@ const FILES: FileItem[] = [
         id: '8', name: 'Colorful_donunt.jpg', type: 'jpg', size: '216.8 kB', date: 'Feb 12, 2025',
         url: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&q=80&w=1000'
     },
+    // Mock Driver Files
+    {
+        id: 'd1', name: 'Entrega_NF_1234.jpg', type: 'jpg', size: '2.4 MB', date: new Date().toLocaleDateString(),
+        url: 'https://images.unsplash.com/photo-1625246333195-58197bd47d26?auto=format&fit=crop&q=80&w=1000', // Delivery/Box image
+        folderId: 'received'
+    },
+    {
+        id: 'd2', name: 'Comprovante_Abastecimento.jpg', type: 'jpg', size: '1.8 MB', date: new Date().toLocaleDateString(),
+        url: 'https://images.unsplash.com/photo-1565514020176-dbf227747033?auto=format&fit=crop&q=80&w=1000', // Receipt image
+        folderId: 'received'
+    },
+    {
+        id: 'd3', name: 'Avaria_Parachoque.jpg', type: 'jpg', size: '3.1 MB', date: new Date().toLocaleDateString(),
+        url: 'https://images.unsplash.com/photo-1507136566006-cfc505b114fc?auto=format&fit=crop&q=80&w=1000', // Truck/Damage image
+        folderId: 'received'
+    },
 ];
 
 export const FileManager: React.FC = () => {
+    const { t } = useTranslation();
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentFolder, setCurrentFolder] = useState<FileItem | null>(null);
     const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
     const [showPreview, setShowPreview] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [folders, setFolders] = useState<FileItem[]>(FOLDERS);
+    const [folders, setFolders] = useState<FileItem[]>(getFolders(t));
     const [files, setFiles] = useState<FileItem[]>(FILES);
+
+    // Update folders when language changes
+    React.useEffect(() => {
+        setFolders(getFolders(t));
+    }, [t]);
 
     // Folder Management State
     const [showFolderModal, setShowFolderModal] = useState(false);
@@ -161,7 +176,7 @@ export const FileManager: React.FC = () => {
 
     const handleDeleteFolderClick = (e: React.MouseEvent, folderId: string) => {
         e.stopPropagation();
-        if (window.confirm('Tem certeza que deseja excluir esta pasta?')) {
+        if (window.confirm(t('files.modal.deleteConfirm'))) {
             setFolders(prev => prev.filter(f => f.id !== folderId));
         }
         setActiveFolderMenuId(null);
@@ -250,7 +265,7 @@ export const FileManager: React.FC = () => {
                 return (
                     <div className="flex flex-col items-center justify-center h-64 text-txt-tertiary">
                         <span className="material-symbols-outlined text-6xl mb-4">visibility_off</span>
-                        <p>Visualização online não disponível para arquivos locais recém-enviados.</p>
+                        <p>{t('files.preview.noOnlinePreview')}</p>
                     </div>
                 );
             }
@@ -267,9 +282,9 @@ export const FileManager: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center h-64 text-txt-tertiary">
                 <span className="material-symbols-outlined text-6xl mb-4">visibility_off</span>
-                <p>Visualização não disponível para este tipo de arquivo.</p>
+                <p>{t('files.preview.noPreview')}</p>
                 <a href={selectedFile.url} target="_blank" rel="noopener noreferrer" className="mt-4 px-4 py-2 bg-brand-primary text-bg-main rounded-lg font-bold">
-                    Baixar Arquivo
+                    {t('files.details.download')}
                 </a>
             </div>
         );
@@ -296,7 +311,7 @@ export const FileManager: React.FC = () => {
                             </button>
                         )}
                         <h1 className="text-2xl font-bold text-txt-primary">
-                            {currentFolder ? currentFolder.name : 'Gestor de Arquivos'}
+                            {currentFolder ? currentFolder.name : t('files.title')}
                         </h1>
                     </div>
 
@@ -305,7 +320,7 @@ export const FileManager: React.FC = () => {
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-txt-tertiary text-sm">search</span>
                             <input
                                 type="text"
-                                placeholder="Pesquisar..."
+                                placeholder={t('files.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="bg-surface-1 border border-surface-border rounded-lg py-2 pl-9 pr-4 text-sm text-txt-primary outline-none focus:border-brand-primary w-64"
@@ -317,7 +332,7 @@ export const FileManager: React.FC = () => {
                             className="px-4 py-2 bg-surface-1 border border-surface-border hover:bg-surface-2 text-txt-primary font-bold rounded-lg text-sm transition-colors flex items-center gap-2"
                         >
                             <span className="material-symbols-outlined">create_new_folder</span>
-                            Nova Pasta
+                            {t('files.newFolder')}
                         </button>
 
                         <div className="bg-surface-1 border border-surface-border rounded-lg p-1 flex">
@@ -340,7 +355,7 @@ export const FileManager: React.FC = () => {
                             className="px-4 py-2 bg-brand-primary hover:bg-brand-hover text-bg-main font-bold rounded-lg text-sm transition-colors flex items-center gap-2 shadow-lg shadow-brand-primary/20"
                         >
                             <span className="material-symbols-outlined">upload_file</span>
-                            Upload
+                            {t('files.upload')}
                         </button>
                     </div>
                 </div>
@@ -348,7 +363,7 @@ export const FileManager: React.FC = () => {
                 <div className="flex-1 overflow-y-auto pr-2">
                     {/* Breadcrumbs */}
                     <div className="flex items-center gap-2 text-sm text-txt-tertiary mb-4">
-                        <span className={`cursor-pointer hover:text-txt-primary ${!currentFolder ? 'font-bold text-txt-primary' : ''}`} onClick={handleBackClick}>Home</span>
+                        <span className={`cursor-pointer hover:text-txt-primary ${!currentFolder ? 'font-bold text-txt-primary' : ''}`} onClick={handleBackClick}>{t('files.home')}</span>
                         {currentFolder && (
                             <>
                                 <span className="material-symbols-outlined text-sm">chevron_right</span>
@@ -362,7 +377,7 @@ export const FileManager: React.FC = () => {
                             {/* Folders Section */}
                             {filteredFolders.length > 0 && (
                                 <div className="mb-8">
-                                    <h2 className="text-lg font-bold text-txt-primary mb-4">Pastas</h2>
+                                    <h2 className="text-lg font-bold text-txt-primary mb-4">{t('files.folders')}</h2>
                                     {viewMode === 'grid' ? (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                             {filteredFolders.map(folder => (
@@ -390,14 +405,14 @@ export const FileManager: React.FC = () => {
                                                                     className="w-full text-left px-4 py-2 text-sm text-txt-primary hover:bg-surface-3 flex items-center gap-2"
                                                                 >
                                                                     <span className="material-symbols-outlined text-sm">edit</span>
-                                                                    Renomear
+                                                                    {t('files.actions.rename')}
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => handleDeleteFolderClick(e, folder.id)}
                                                                     className="w-full text-left px-4 py-2 text-sm text-semantic-error hover:bg-surface-3 flex items-center gap-2"
                                                                 >
                                                                     <span className="material-symbols-outlined text-sm">delete</span>
-                                                                    Excluir
+                                                                    {t('files.actions.delete')}
                                                                 </button>
                                                             </div>
                                                         )}
@@ -439,14 +454,14 @@ export const FileManager: React.FC = () => {
                                                                 className="w-full text-left px-4 py-2 text-sm text-txt-primary hover:bg-surface-3 flex items-center gap-2"
                                                             >
                                                                 <span className="material-symbols-outlined text-sm">edit</span>
-                                                                Renomear
+                                                                {t('files.actions.rename')}
                                                             </button>
                                                             <button
                                                                 onClick={(e) => handleDeleteFolderClick(e, folder.id)}
                                                                 className="w-full text-left px-4 py-2 text-sm text-semantic-error hover:bg-surface-3 flex items-center gap-2"
                                                             >
                                                                 <span className="material-symbols-outlined text-sm">delete</span>
-                                                                Excluir
+                                                                {t('files.actions.delete')}
                                                             </button>
                                                         </div>
                                                     )}
@@ -459,16 +474,16 @@ export const FileManager: React.FC = () => {
 
                             {/* Files Section (Root) */}
                             <div>
-                                <h2 className="text-lg font-bold text-txt-primary mb-4">Arquivos Recentes</h2>
+                                <h2 className="text-lg font-bold text-txt-primary mb-4">{t('files.recentFiles')}</h2>
                                 {filteredFiles.length === 0 && searchQuery === '' ? (
                                     <div className="flex flex-col items-center justify-center py-20 text-txt-tertiary">
                                         <span className="material-symbols-outlined text-6xl mb-4 opacity-20">folder_open</span>
-                                        <p>Nenhum arquivo encontrado na raiz.</p>
+                                        <p>{t('files.emptyRoot')}</p>
                                     </div>
                                 ) : filteredFiles.length === 0 && searchQuery !== '' ? (
                                     <div className="flex flex-col items-center justify-center py-20 text-txt-tertiary">
                                         <span className="material-symbols-outlined text-6xl mb-4 opacity-20">search_off</span>
-                                        <p>Nenhum arquivo corresponde à sua pesquisa.</p>
+                                        <p>{t('files.noSearchResults')}</p>
                                     </div>
                                 ) : viewMode === 'grid' ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -521,14 +536,14 @@ export const FileManager: React.FC = () => {
                         /* Inside Folder View */
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-bold text-txt-primary">Arquivos em {currentFolder.name}</h2>
-                                <span className="text-sm text-txt-tertiary">{filteredFiles.length} itens</span>
+                                <h2 className="text-lg font-bold text-txt-primary">{t('files.filesIn')} {currentFolder.name}</h2>
+                                <span className="text-sm text-txt-tertiary">{filteredFiles.length} {t('files.items')}</span>
                             </div>
 
                             {filteredFiles.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-txt-tertiary">
                                     <span className="material-symbols-outlined text-6xl mb-4 opacity-20">folder_open</span>
-                                    <p>Esta pasta está vazia.</p>
+                                    <p>{t('files.emptyFolder')}</p>
                                 </div>
                             ) : (
                                 viewMode === 'grid' ? (
@@ -586,7 +601,7 @@ export const FileManager: React.FC = () => {
             {selectedFile && (
                 <div className="w-80 bg-surface-1 border border-surface-border rounded-2xl p-6 hidden xl:flex flex-col">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-txt-primary">Detalhes</h3>
+                        <h3 className="font-bold text-txt-primary">{t('files.details.title')}</h3>
                         <button onClick={() => setSelectedFile(null)} className="text-txt-tertiary hover:text-txt-primary">
                             <span className="material-symbols-outlined">close</span>
                         </button>
@@ -602,21 +617,21 @@ export const FileManager: React.FC = () => {
 
                     <div className="space-y-4">
                         <div>
-                            <p className="text-xs text-txt-tertiary mb-1">Tipo</p>
+                            <p className="text-xs text-txt-tertiary mb-1">{t('files.details.type')}</p>
                             <p className="text-sm font-medium text-txt-primary uppercase">{selectedFile.type}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-txt-tertiary mb-1">Criado em</p>
+                            <p className="text-xs text-txt-tertiary mb-1">{t('files.details.created')}</p>
                             <p className="text-sm font-medium text-txt-primary">{selectedFile.date}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-txt-tertiary mb-1">Modificado em</p>
+                            <p className="text-xs text-txt-tertiary mb-1">{t('files.details.modified')}</p>
                             <p className="text-sm font-medium text-txt-primary">{selectedFile.date}</p>
                         </div>
 
                         {selectedFile.sharedWith && (
                             <div>
-                                <p className="text-xs text-txt-tertiary mb-2">Compartilhado com</p>
+                                <p className="text-xs text-txt-tertiary mb-2">{t('files.details.sharedWith')}</p>
                                 <div className="flex items-center gap-2">
                                     {selectedFile.sharedWith.map((user, idx) => (
                                         <img key={idx} src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border-2 border-surface-1" title={user.name} />
@@ -634,7 +649,7 @@ export const FileManager: React.FC = () => {
                             onClick={() => setShowPreview(true)}
                             className="flex-1 py-2 bg-brand-primary text-bg-main font-bold rounded-lg hover:bg-brand-hover transition-colors"
                         >
-                            Abrir
+                            {t('files.details.open')}
                         </button>
                         <button className="p-2 border border-surface-border rounded-lg hover:bg-surface-2 text-txt-primary transition-colors">
                             <span className="material-symbols-outlined">download</span>
@@ -676,13 +691,13 @@ export const FileManager: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={(e) => e.stopPropagation()}>
                     <div className="bg-surface-1 rounded-2xl w-full max-w-md p-6 border border-surface-border shadow-2xl">
                         <h3 className="text-xl font-bold text-txt-primary mb-4">
-                            {folderModalMode === 'create' ? 'Nova Pasta' : 'Renomear Pasta'}
+                            {folderModalMode === 'create' ? t('files.modal.createTitle') : t('files.modal.renameTitle')}
                         </h3>
                         <input
                             type="text"
                             value={folderNameInput}
                             onChange={(e) => setFolderNameInput(e.target.value)}
-                            placeholder="Nome da pasta"
+                            placeholder={t('files.modal.inputPlaceholder')}
                             className="w-full bg-bg-main border border-surface-border rounded-lg px-4 py-2 text-txt-primary outline-none focus:border-brand-primary mb-6"
                             autoFocus
                             onKeyDown={(e) => {
@@ -695,13 +710,13 @@ export const FileManager: React.FC = () => {
                                 onClick={() => setShowFolderModal(false)}
                                 className="px-4 py-2 text-txt-primary hover:bg-surface-2 rounded-lg transition-colors"
                             >
-                                Cancelar
+                                {t('files.modal.cancel')}
                             </button>
                             <button
                                 onClick={handleSaveFolder}
                                 className="px-4 py-2 bg-brand-primary text-bg-main font-bold rounded-lg hover:bg-brand-hover transition-colors"
                             >
-                                Salvar
+                                {t('files.modal.save')}
                             </button>
                         </div>
                     </div>

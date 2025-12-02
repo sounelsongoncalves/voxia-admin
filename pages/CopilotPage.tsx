@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { copilotService } from '../services/copilot';
 import { aiSettingsRepo, AISettings } from '../repositories/aiSettingsRepo';
 
 import { settingsRepo } from '../repositories/settingsRepo';
 
 export const CopilotPage: React.FC = () => {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'chat' | 'settings'>('chat');
 
     // Chat State
@@ -62,14 +64,14 @@ export const CopilotPage: React.FC = () => {
             if (prefs?.copilot_auto_analysis) {
                 // Trigger auto-analysis
                 setLoading(true);
-                const autoMsg = { role: 'admin', content: '🔄 Análise Automática Iniciada...', created_at: new Date().toISOString() };
+                const autoMsg = { role: 'admin', content: t('copilot.page.autoAnalysisStarted'), created_at: new Date().toISOString() };
                 setMessages(prev => [...prev, autoMsg]);
 
                 try {
                     // Start a new conversation for auto-analysis? Or use current?
                     // For now, let's assume it starts a new one if none active
                     const response = await copilotService.query({
-                        question: 'Faça uma análise breve dos KPIs atuais da frota e sugira ações.',
+                        question: t('copilot.page.autoAnalysisPrompt'),
                         conversationId: currentConversationId || undefined
                     });
 
@@ -101,7 +103,7 @@ export const CopilotPage: React.FC = () => {
 
     const handleDeleteConversation = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (!confirm('Tem certeza que deseja apagar esta conversa?')) return;
+        if (!confirm(t('copilot.page.deleteConfirm'))) return;
 
         try {
             await copilotService.deleteConversation(id);
@@ -111,7 +113,7 @@ export const CopilotPage: React.FC = () => {
             }
         } catch (error) {
             console.error('Failed to delete conversation', error);
-            alert('Erro ao apagar conversa.');
+            alert(t('copilot.page.deleteError'));
         }
     };
 
@@ -130,7 +132,7 @@ export const CopilotPage: React.FC = () => {
         // Optimistic UI update
         const userMsg = {
             role: 'admin',
-            content: content + (file ? `\n[Arquivo anexado: ${file.name}]` : ''),
+            content: content + (file ? t('copilot.page.fileAttached', { fileName: file.name }) : ''),
             created_at: new Date().toISOString()
         };
         setMessages(prev => [...prev, userMsg]);
@@ -181,7 +183,7 @@ export const CopilotPage: React.FC = () => {
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
             console.error(error);
-            const errorMsg = { role: 'ai', content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Verifique suas configurações de IA.', created_at: new Date().toISOString() };
+            const errorMsg = { role: 'ai', content: t('copilot.page.errorProcessing'), created_at: new Date().toISOString() };
             setMessages(prev => [...prev, errorMsg]);
         } finally {
             setLoading(false);
@@ -193,12 +195,13 @@ export const CopilotPage: React.FC = () => {
         setSavingSettings(true);
         try {
             await aiSettingsRepo.saveSettings(settings.provider, settings.model, apiKey);
+            await aiSettingsRepo.saveSettings(settings.provider, settings.model, apiKey);
             setSettings(prev => ({ ...prev, hasKey: !!apiKey }));
             setApiKey(''); // Clear input
-            alert('Configurações salvas com sucesso!');
+            alert(t('copilot.page.settingsSaved'));
         } catch (error) {
             console.error(error);
-            alert('Erro ao salvar configurações.');
+            alert(t('copilot.page.settingsError'));
         } finally {
             setSavingSettings(false);
         }
@@ -211,10 +214,10 @@ export const CopilotPage: React.FC = () => {
     };
 
     const suggestionCards = [
-        { icon: 'analytics', text: 'Analisar desempenho da frota hoje', action: 'Faça uma análise do desempenho da frota hoje.' },
-        { icon: 'warning', text: 'Identificar motoristas com comportamento de risco', action: 'Quais motoristas tiveram alertas de segurança recentes?' },
-        { icon: 'local_gas_station', text: 'Relatório de consumo de combustível', action: 'Gere um relatório de consumo de combustível dos veículos.' },
-        { icon: 'route', text: 'Otimizar rotas de entrega pendentes', action: 'Como posso otimizar as rotas pendentes?' },
+        { icon: 'analytics', text: t('copilot.page.suggestion.analyze'), action: t('copilot.page.suggestion.analyzeAction') },
+        { icon: 'warning', text: t('copilot.page.suggestion.risk'), action: t('copilot.page.suggestion.riskAction') },
+        { icon: 'local_gas_station', text: t('copilot.page.suggestion.fuel'), action: t('copilot.page.suggestion.fuelAction') },
+        { icon: 'route', text: t('copilot.page.suggestion.routes'), action: t('copilot.page.suggestion.routesAction') },
     ];
 
     const handleCardClick = (action: string) => {
@@ -246,13 +249,13 @@ export const CopilotPage: React.FC = () => {
                                 <button onClick={() => setActiveTab('chat')} className="p-2 hover:bg-surface-2 rounded-full transition-colors">
                                     <span className="material-symbols-outlined text-txt-secondary">arrow_back</span>
                                 </button>
-                                <h2 className="text-2xl font-bold text-txt-primary">Configurações</h2>
+                                <h2 className="text-2xl font-bold text-txt-primary">{t('copilot.page.settings.title')}</h2>
                             </div>
 
                             <form onSubmit={handleSaveSettings} className="space-y-6 bg-surface-1 p-6 rounded-2xl border border-surface-border">
                                 {/* Settings Form Content (Reused) */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-txt-secondary">Provedor de IA</label>
+                                    <label className="text-sm font-medium text-txt-secondary">{t('copilot.page.settings.provider')}</label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <button
                                             type="button"
@@ -280,7 +283,7 @@ export const CopilotPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-txt-secondary">Modelo</label>
+                                    <label className="text-sm font-medium text-txt-secondary">{t('copilot.page.settings.model')}</label>
                                     <select
                                         value={settings.model}
                                         onChange={(e) => setSettings({ ...settings, model: e.target.value })}
@@ -288,12 +291,12 @@ export const CopilotPage: React.FC = () => {
                                     >
                                         {settings.provider === 'openai' ? (
                                             <>
-                                                <option value="gpt-4o">GPT-4o (Recomendado)</option>
+                                                <option value="gpt-4o">GPT-4o {t('copilot.page.settings.recommended')}</option>
                                                 <option value="gpt-4-turbo">GPT-4 Turbo</option>
                                             </>
                                         ) : (
                                             <>
-                                                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Recomendado)</option>
+                                                <option value="gemini-1.5-pro">Gemini 1.5 Pro {t('copilot.page.settings.recommended')}</option>
                                                 <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                                             </>
                                         )}
@@ -301,7 +304,7 @@ export const CopilotPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-txt-secondary">API Key</label>
+                                    <label className="text-sm font-medium text-txt-secondary">{t('copilot.page.settings.apiKey')}</label>
                                     <input
                                         type="password"
                                         value={apiKey}
@@ -316,7 +319,7 @@ export const CopilotPage: React.FC = () => {
                                     disabled={savingSettings}
                                     className="w-full py-3 rounded-lg bg-brand-primary text-bg-main font-bold hover:bg-brand-hover transition-colors shadow-lg shadow-brand-primary/20 disabled:opacity-50"
                                 >
-                                    {savingSettings ? 'Salvando...' : 'Salvar Configurações'}
+                                    {savingSettings ? t('copilot.page.settings.saving') : t('copilot.page.settings.save')}
                                 </button>
                             </form>
                         </div>
@@ -329,9 +332,9 @@ export const CopilotPage: React.FC = () => {
                                 <div className="h-full flex flex-col items-center justify-center max-w-4xl mx-auto w-full animate-fade-in">
                                     <div className="mb-8 text-center">
                                         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-blue-500">Olá, Administrador</span>
+                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-blue-500">{t('copilot.page.welcome.title')}</span>
                                         </h1>
-                                        <p className="text-xl md:text-2xl text-txt-secondary font-light">Como posso ajudar sua frota hoje?</p>
+                                        <p className="text-xl md:text-2xl text-txt-secondary font-light">{t('copilot.page.welcome.subtitle')}</p>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -408,7 +411,7 @@ export const CopilotPage: React.FC = () => {
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
                                         className="p-3 text-txt-tertiary hover:text-brand-primary transition-colors rounded-xl hover:bg-surface-2"
-                                        title="Anexar arquivo"
+                                        title={t('copilot.page.attachFile')}
                                     >
                                         <span className="material-symbols-outlined">add_circle</span>
                                     </button>
@@ -421,7 +424,7 @@ export const CopilotPage: React.FC = () => {
                                                 handleSendMessage(e as any);
                                             }
                                         }}
-                                        placeholder="Digite sua mensagem para o Copiloto..."
+                                        placeholder={t('copilot.page.inputPlaceholder')}
                                         className="flex-1 bg-transparent border-none outline-none text-txt-primary py-3 px-2 max-h-32 resize-none placeholder-txt-tertiary scrollbar-hide"
                                         rows={1}
                                         disabled={loading}
@@ -435,7 +438,7 @@ export const CopilotPage: React.FC = () => {
                                     </button>
                                 </form>
                                 <p className="text-center text-xs text-txt-tertiary mt-2">
-                                    O Copiloto pode cometer erros. Verifique informações importantes.
+                                    {t('copilot.page.disclaimer')}
                                 </p>
                             </div>
                         </div>
@@ -450,7 +453,7 @@ export const CopilotPage: React.FC = () => {
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-txt-tertiary text-sm">search</span>
                         <input
                             type="text"
-                            placeholder="Pesquisar conversa"
+                            placeholder={t('copilot.page.history.search')}
                             className="w-full bg-surface-2 border border-surface-border rounded-lg py-2.5 pl-9 pr-4 text-sm text-txt-primary outline-none focus:border-brand-primary transition-colors placeholder-txt-tertiary"
                         />
                     </div>
@@ -458,7 +461,7 @@ export const CopilotPage: React.FC = () => {
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
                     <div>
-                        <h3 className="text-xs font-bold text-txt-tertiary uppercase tracking-wider mb-3 px-2">Histórico</h3>
+                        <h3 className="text-xs font-bold text-txt-tertiary uppercase tracking-wider mb-3 px-2">{t('copilot.page.history.title')}</h3>
                         <div className="space-y-1">
                             {conversations.map((conv) => (
                                 <div key={conv.id} className="group relative">
@@ -469,19 +472,19 @@ export const CopilotPage: React.FC = () => {
                                             : 'text-txt-secondary hover:bg-surface-2 hover:text-txt-primary'
                                             }`}
                                     >
-                                        Conversa {formatDate(conv.created_at)}
+                                        {t('copilot.page.history.conversation')} {formatDate(conv.created_at)}
                                     </button>
                                     <button
                                         onClick={(e) => handleDeleteConversation(e, conv.id)}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 text-txt-tertiary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                                        title="Apagar conversa"
+                                        title={t('copilot.page.history.delete')}
                                     >
                                         <span className="material-symbols-outlined text-xs">delete</span>
                                     </button>
                                 </div>
                             ))}
                             {conversations.length === 0 && (
-                                <p className="text-xs text-txt-tertiary px-2">Nenhuma conversa salva.</p>
+                                <p className="text-xs text-txt-tertiary px-2">{t('copilot.page.history.empty')}</p>
                             )}
                         </div>
                     </div>
@@ -493,14 +496,14 @@ export const CopilotPage: React.FC = () => {
                         className="w-full py-3 bg-brand-primary text-bg-main font-bold rounded-xl hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-primary/20"
                     >
                         <span className="material-symbols-outlined">add</span>
-                        Nova Conversa
+                        {t('copilot.page.newChat')}
                     </button>
                     <button
                         onClick={() => setActiveTab('settings')}
                         className="w-full py-3 bg-surface-2 text-txt-primary font-medium rounded-xl hover:bg-surface-3 transition-colors flex items-center justify-center gap-2 border border-surface-border"
                     >
                         <span className="material-symbols-outlined">settings</span>
-                        Configurações
+                        {t('copilot.page.settingsButton')}
                     </button>
                 </div>
             </div>

@@ -26,7 +26,289 @@
         "map": "Mapa",
         "expand": "Expandir",
         "creating": "Creando...",
-        "assigning": "Asignando..."
+        "assigning": "Asignando...",
+        "vehicle": "Vehículo"
+    },
+    "copilot": {
+        "title": "IA Voxia",
+        "welcomeMessage": "Hola Administrador. Estoy analizando los datos de su flota. ¿Cómo puedo ayudarle hoy?",
+        "placeholder": "Pregunte sobre su flota...",
+        "errorMessage": "Lo siento, ocurrió un error al procesar su consulta. Por favor, inténtelo de nuevo.",
+        "suggestions": {
+            "activeTrips": "¿Cuántos viajes activos tenemos ahora?",
+            "fuelEfficiency": "¿Cuál es la eficiencia media de combustible de la flota?",
+            "punctuality": "Muestre los conductores con mejor tasa de puntualidad",
+            "maintenance": "¿Qué vehículos necesitan mantenimiento?"
+        },
+        "page": {
+            "autoAnalysisStarted": "🔄 Análisis Automático Iniciado...",
+            "autoAnalysisPrompt": "Realice un breve análisis de los KPIs actuales de la flota y sugiera acciones.",
+            "deleteConfirm": "¿Está seguro de que desea eliminar esta conversación?",
+            "deleteError": "Error al eliminar la conversación.",
+            "fileAttached": "\n[Archivo adjunto: {{fileName}}]",
+            "errorProcessing": "Lo siento, ocurrió un error al procesar su mensaje. Verifique su configuración de IA.",
+            "settingsSaved": "¡Configuración guardada con éxito!",
+            "settingsError": "Error al guardar la configuración.",
+            "suggestion": {
+                "analyze": "Analizar rendimiento de la flota hoy",
+                "analyzeAction": "Realice un análisis del rendimiento de la flota hoy.",
+                "risk": "Identificar conductores con comportamiento de riesgo",
+                "riskAction": "¿Qué conductores tuvieron alertas de seguridad recientes?",
+                "fuel": "Informe de consumo de combustible",
+                "fuelAction": "Genere un informe de consumo de combustible de los vehículos.",
+                "routes": "Optimizar rutas de entrega pendientes",
+                "routesAction": "¿Cómo puedo optimizar las rutas pendientes?"
+            },
+            "settings": {
+                "title": "Configuración",
+                "provider": "Proveedor de IA",
+                "model": "Modelo",
+                "recommended": "(Recomendado)",
+                "apiKey": "Clave API",
+                "save": "Guardar Configuración",
+                "saving": "Guardando..."
+            },
+            "welcome": {
+                "title": "Hola, Administrador",
+                "subtitle": "¿Cómo puedo ayudar a su flota hoy?"
+            },
+            "inputPlaceholder": "Escriba su mensaje al Copiloto...",
+            "attachFile": "Adjuntar archivo",
+            "disclaimer": "El Copiloto puede cometer errores. Verifique la información importante.",
+            "history": {
+                "search": "Buscar conversación",
+                "title": "Historial",
+                "conversation": "Conversación",
+                "delete": "Eliminar conversación",
+                "empty": "Ninguna conversación guardada."
+            },
+            "newChat": "Nueva Conversación",
+            "settingsButton": "Configuración"
+        }
+    },
+    "settings": {
+        "title": "Configuración",
+        "loading": "Cargando...",
+        "tabs": {
+            "general": "General",
+            "profile": "Perfil",
+            "security": "Seguridad",
+            "users": "Usuarios"
+        },
+        "general": {
+            "title": "Configuración General",
+            "changeLogo": "Cambiar Logo",
+            "remove": "Eliminar",
+            "orgName": "Nombre de la Organización",
+            "primaryColor": "Color Primario",
+            "supportEmail": "Email de Soporte",
+            "supportPhone": "Teléfono de Soporte",
+            "save": "Guardar Cambios",
+            "success": "¡Configuración general actualizada con éxito!",
+            "error": "Error al actualizar la configuración: "
+        },
+        "profile": {
+            "title": "Información Personal",
+            "uploadImage": "Cargar Imagen",
+            "firstName": "Nombre",
+            "username": "Nombre de Usuario",
+            "email": "Email",
+            "phone": "Móvil",
+            "addressTitle": "Información de Dirección",
+            "country": "País",
+            "address": "Dirección",
+            "city": "Ciudad",
+            "postalCode": "Código Postal",
+            "save": "Guardar Cambios",
+            "success": "¡Perfil actualizado con éxito!",
+            "error": "Error al actualizar el perfil: "
+        },
+        "security": {
+            "title": "Seguridad",
+            "subtitle": "Gestione sus preferencias de seguridad y contraseña.",
+            "currentPassword": "Contraseña Actual",
+            "newPassword": "Nueva Contraseña",
+            "confirmPassword": "Confirmar Nueva Contraseña",
+            "updatePassword": "Actualizar Contraseña",
+            "passwordMismatch": "Las contraseñas no coinciden.",
+            "success": "¡Contraseña actualizada con éxito!",
+            "error": "Error al actualizar la contraseña: ",
+            "twoFactorTitle": "Autenticación en 2 Pasos",
+            "twoFactor": {
+                "google": "Usar la app Google Authenticator.",
+                "okta": "Notificaciones push de la app Okta.",
+                "email": "Códigos enviados por email."
+            },
+            "active": "Activo",
+            "activate": "Activar"
+        },
+        "users": {
+            "title": "Gestión de Usuarios",
+            "addNew": "Añadir Nuevo"
+        }
+    },
+    "alerts": {
+        "title": "Centro de Alertas",
+        "subtitle": "Monitoree y gestione notificaciones importantes de la flota en tiempo real.",
+        "markAllRead": "Marcar todo como leído",
+        "allMarkedRead": "Todas las alertas marcadas como leídas.",
+        "types": {
+            "critical": "Críticos",
+            "warning": "Avisos",
+            "info": "Informativos",
+            "all": "Todos los Tipos"
+        },
+        "status": {
+            "label": "Estado:",
+            "all": "Todos",
+            "open": "Abiertos",
+            "resolved": "Resueltos"
+        },
+        "card": {
+            "critical": "Crítico",
+            "warning": "Aviso",
+            "info": "Info",
+            "vehicle": "Vehículo:"
+        },
+        "actions": {
+            "viewMap": "Ver en Mapa",
+            "archive": "Archivar",
+            "openContext": "Abrir Contexto",
+            "closeContext": "Cerrar Contexto"
+        },
+        "context": {
+            "title": "Contexto de Alerta",
+            "status": "Estado: Pendiente",
+            "operationalDetails": "Detalles Operacionales",
+            "occurrence": "Ocurrencia:",
+            "aiSuggestion": "Sugerencia IA:",
+            "aiSuggestionText": "Verifique el historial de mantenimiento reciente de este vehículo.",
+            "resolve": "Marcar como Resuelto"
+        },
+        "confirmResolve": "¿Está seguro de que desea marcar esta alerta como resuelta?",
+        "resolveSuccess": "¡Alerta resuelta con éxito!",
+        "resolveError": "Error al resolver la alerta. Inténtelo de nuevo.",
+        "archiveSuccess": "¡Alerta archivada con éxito!",
+        "archiveError": "Error al archivar la alerta.",
+        "empty": {
+            "title": "¡Todo limpio por aquí!",
+            "subtitle": "No se encontraron alertas en esta categoría."
+        }
+    },
+    "reports": {
+        "loading": "Cargando informes...",
+        "title": "Informes y Análisis",
+        "subtitle": "Análisis detallado del rendimiento, costos y seguridad de la flota.",
+        "periods": {
+            "7days": "7 Días",
+            "30days": "30 Días",
+            "thisMonth": "Este Mes",
+            "year": "Año"
+        },
+        "export": {
+            "button": "Exportar",
+            "success": "Exportación de informe iniciada. La descarga comenzará en breve."
+        },
+        "kpi": {
+            "fuelCost": "Costo Est. Combustible",
+            "totalKm": "KM Total Recorrido",
+            "safetyScore": "Puntuación de Seguridad",
+            "maintenance": "Vehículos en Mantenimiento",
+            "expected": "Dentro de lo esperado"
+        },
+        "charts": {
+            "fuelConsumption": "Consumo de Combustible (L/100km)",
+            "vehicleTypes": {
+                "all": "Todos los Vehículos",
+                "heavy": "Pesados",
+                "medium": "Medianos"
+            },
+            "months": [
+                "Ene",
+                "Feb",
+                "Mar",
+                "Abr",
+                "May",
+                "Jun",
+                "Jul",
+                "Ago",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dic"
+            ]
+        },
+        "fleetDistribution": {
+            "title": "Distribución de la Flota",
+            "inTransit": "En Tránsito",
+            "stopped": "Parados / Inactivos",
+            "maintenance": "Mantenimiento",
+            "available": "Disponible"
+        },
+        "copilot": {
+            "title": "Insight del Copiloto",
+            "text": "La eficiencia de combustible cayó un 1.2% los fines de semana. Considere revisar las rutas del sábado para evitar congestiones locales."
+        },
+        "driverPerformance": {
+            "title": "Rendimiento por Conductor",
+            "table": {
+                "driver": "Conductor",
+                "trips": "Viajes",
+                "totalKm": "KM Total",
+                "safety": "Seguridad",
+                "efficiency": "Eficiencia",
+                "status": "Estado",
+                "empty": "No hay datos de rendimiento disponibles",
+                "details": "Ver Detalles"
+            }
+        }
+    },
+    "files": {
+        "title": "Gestor de Archivos",
+        "searchPlaceholder": "Buscar...",
+        "newFolder": "Nueva Carpeta",
+        "upload": "Subir",
+        "home": "Inicio",
+        "folders": "Carpetas",
+        "recentFiles": "Archivos Recientes",
+        "emptyRoot": "No se encontraron archivos en la raíz.",
+        "noSearchResults": "Ningún archivo coincide con su búsqueda.",
+        "filesIn": "Archivos en",
+        "items": "elementos",
+        "emptyFolder": "Esta carpeta está vacía.",
+        "details": {
+            "title": "Detalles",
+            "type": "Tipo",
+            "created": "Creado en",
+            "modified": "Modificado en",
+            "sharedWith": "Compartido con",
+            "open": "Abrir",
+            "download": "Descargar Archivo"
+        },
+        "preview": {
+            "noPreview": "Vista previa no disponible para este tipo de archivo.",
+            "noOnlinePreview": "Vista previa en línea no disponible para archivos locales recién subidos."
+        },
+        "modal": {
+            "createTitle": "Nueva Carpeta",
+            "renameTitle": "Renombrar Carpeta",
+            "inputPlaceholder": "Nombre de la carpeta",
+            "cancel": "Cancelar",
+            "save": "Guardar",
+            "deleteConfirm": "¿Está seguro de que desea eliminar esta carpeta?"
+        },
+        "actions": {
+            "rename": "Renombrar",
+            "delete": "Eliminar"
+        },
+        "defaultFolders": {
+            "received": "Recibidos (Conductores)",
+            "projectFiles": "Archivos del Proyecto",
+            "documents": "Documentos",
+            "teamResources": "Recursos del Equipo",
+            "clientData": "Datos del Cliente",
+            "backupFiles": "Archivos de Respaldo"
+        }
     },
     "sidebar": {
         "overview": "Visión General",

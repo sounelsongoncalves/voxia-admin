@@ -59,6 +59,80 @@ export const AdminHome: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // MOCK DATA FOR INVESTOR PRESENTATION
+      const USE_MOCK = true;
+
+      const MOCK_KPIS = {
+        totalDrivers: 24,
+        activeDrivers: 18,
+        totalVehicles: 30,
+        vehiclesInUse: 22,
+        totalTrips: 156,
+        activeTrips: 12,
+        openAlerts: 3,
+      };
+
+      const MOCK_TRIPS_PER_DAY = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return {
+          date: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          trips: Math.floor(Math.random() * 15) + 5 // Random between 5 and 20
+        };
+      });
+
+      const MOCK_TOP_DRIVERS = [
+        { name: 'Carlos Silva', km: 1250 },
+        { name: 'João Pereira', km: 980 },
+        { name: 'Miguel Costa', km: 850 },
+        { name: 'Ana Santos', km: 720 },
+        { name: 'Pedro Oliveira', km: 650 },
+      ];
+
+      const MOCK_FUEL_CONSUMPTION = [
+        { plate: 'AA-01-BB', consumption: 28.5 },
+        { plate: 'CC-22-DD', consumption: 30.2 },
+        { plate: 'EE-33-FF', consumption: 27.8 },
+        { plate: 'GG-44-HH', consumption: 29.1 },
+        { plate: 'II-55-JJ', consumption: 31.5 },
+      ];
+
+      const MOCK_RECENT_TRIPS: any[] = [
+        { id: 'TRIP-1001', origin: 'Lisboa', destination: 'Porto', status: Status.InTransit, progress: 75, driver: 'Carlos Silva', vehicleId: 'AA-01-BB', createdAt: new Date().toISOString() },
+        { id: 'TRIP-1002', origin: 'Faro', destination: 'Lisboa', status: Status.Completed, progress: 100, driver: 'João Pereira', vehicleId: 'CC-22-DD', createdAt: new Date().toISOString() },
+        { id: 'TRIP-1003', origin: 'Coimbra', destination: 'Braga', status: Status.Active, progress: 30, driver: 'Miguel Costa', vehicleId: 'EE-33-FF', createdAt: new Date().toISOString() },
+        { id: 'TRIP-1004', origin: 'Setúbal', destination: 'Évora', status: Status.Warning, progress: 45, driver: 'Ana Santos', vehicleId: 'GG-44-HH', createdAt: new Date().toISOString() },
+        { id: 'TRIP-1005', origin: 'Viseu', destination: 'Aveiro', status: Status.InTransit, progress: 60, driver: 'Pedro Oliveira', vehicleId: 'II-55-JJ', createdAt: new Date().toISOString() },
+      ];
+
+      const MOCK_ACTIVE_DRIVERS = [
+        { driver: { id: 'd1', name: 'Carlos Silva', avatar: '' }, trip: { id: 'TRIP-1001', origin: 'Lisboa', destination: 'Porto', progress: 75 } },
+        { driver: { id: 'd2', name: 'Miguel Costa', avatar: '' }, trip: { id: 'TRIP-1003', origin: 'Coimbra', destination: 'Braga', progress: 30 } },
+        { driver: { id: 'd3', name: 'Ana Santos', avatar: '' }, trip: { id: 'TRIP-1004', origin: 'Setúbal', destination: 'Évora', progress: 45 } },
+        { driver: { id: 'd4', name: 'Pedro Oliveira', avatar: '' }, trip: { id: 'TRIP-1005', origin: 'Viseu', destination: 'Aveiro', progress: 60 } },
+        { driver: { id: 'd5', name: 'Rui Martins', avatar: '' }, trip: { id: 'TRIP-1006', origin: 'Leiria', destination: 'Santarém', progress: 15 } },
+      ];
+
+      if (USE_MOCK) {
+        setKpis(MOCK_KPIS);
+        setTripsPerDayData(MOCK_TRIPS_PER_DAY);
+        setTopDriversData(MOCK_TOP_DRIVERS);
+        setFuelConsumptionData(MOCK_FUEL_CONSUMPTION);
+        setRecentTrips(MOCK_RECENT_TRIPS);
+        setActiveDriversWithTrips(MOCK_ACTIVE_DRIVERS);
+        setLoading(false);
+
+        // Still try to fetch locations for the map as that's nice to have real if possible, 
+        // but don't let it block the UI
+        try {
+          const locations = await locationsRepo.getLatestLocations();
+          setVehicleLocations(locations);
+        } catch (e) {
+          console.warn('Could not fetch real locations, map might be empty');
+        }
+        return;
+      }
+
       try {
         const [drivers, vehicles, trips, alerts, locations, onlineDriversCount, vehiclesInUseCount, kmByDriver, fuelEfficiency] = await Promise.all([
           driversRepo.getDrivers(),
@@ -72,18 +146,23 @@ export const AdminHome: React.FC = () => {
           kpiRepo.getFuelEfficiency()
         ]);
 
+        // Calculate active counts locally to ensure real-time accuracy
+        const activeTripsList = trips.filter(t => t.status === Status.InTransit || t.status === Status.Active);
+        const uniqueActiveDrivers = new Set(activeTripsList.map(t => t.driverId).filter(id => id));
+        const uniqueVehiclesInUse = new Set(activeTripsList.map(t => t.vehicleId).filter(id => id));
+
         setKpis({
           totalDrivers: drivers.length,
-          activeDrivers: onlineDriversCount,
+          activeDrivers: uniqueActiveDrivers.size,
           totalVehicles: vehicles.length,
-          vehiclesInUse: vehiclesInUseCount,
+          vehiclesInUse: uniqueVehiclesInUse.size,
           totalTrips: trips.length,
-          activeTrips: trips.filter(t => t.status === Status.Active || t.status === Status.InTransit).length,
+          activeTrips: activeTripsList.length,
           openAlerts: alerts.filter(a => !a.resolved_at).length,
         });
 
         setRecentTrips(trips.slice(0, 5));
-        setRecentAlerts(alerts.slice(0, 5));
+        setRecentAlerts(alerts.slice(0, 5)); // Alerts can remain real or empty, less critical for visual impact
         setVehicleLocations(locations);
 
         // Process Trips Per Day
@@ -105,6 +184,7 @@ export const AdminHome: React.FC = () => {
           date,
           trips: tripsByDate[date] || 0
         }));
+
         setTripsPerDayData(tripsChartData);
 
         // Process Top Drivers
@@ -350,7 +430,7 @@ export const AdminHome: React.FC = () => {
                         url: 'https://cdn-icons-png.flaticon.com/512/741/741407.png', // Truck icon
                         scaledSize: new google.maps.Size(32, 32)
                       }}
-                      title={`Veículo: ${loc.vehicle_id}`}
+                      title={`${t('common.vehicle')}: ${loc.vehicle_id}`}
                     />
                   ))}
                 </GoogleMap>

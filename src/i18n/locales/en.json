@@ -26,7 +26,289 @@
         "map": "Map",
         "expand": "Expand",
         "creating": "Creating...",
-        "assigning": "Assigning..."
+        "assigning": "Assigning...",
+        "vehicle": "Vehicle"
+    },
+    "copilot": {
+        "title": "Voxia AI",
+        "welcomeMessage": "Hello Administrator. I am analyzing your fleet data. How can I help you today?",
+        "placeholder": "Ask about your fleet...",
+        "errorMessage": "Sorry, an error occurred while processing your query. Please try again.",
+        "suggestions": {
+            "activeTrips": "How many active trips do we have right now?",
+            "fuelEfficiency": "What is the average fuel efficiency of the fleet?",
+            "punctuality": "Show drivers with the best on-time rate",
+            "maintenance": "Which vehicles need maintenance?"
+        },
+        "page": {
+            "autoAnalysisStarted": "🔄 Auto Analysis Started...",
+            "autoAnalysisPrompt": "Perform a brief analysis of current fleet KPIs and suggest actions.",
+            "deleteConfirm": "Are you sure you want to delete this conversation?",
+            "deleteError": "Error deleting conversation.",
+            "fileAttached": "\n[Attached file: {{fileName}}]",
+            "errorProcessing": "Sorry, an error occurred while processing your message. Check your AI settings.",
+            "settingsSaved": "Settings saved successfully!",
+            "settingsError": "Error saving settings.",
+            "suggestion": {
+                "analyze": "Analyze fleet performance today",
+                "analyzeAction": "Perform an analysis of fleet performance today.",
+                "risk": "Identify drivers with risky behavior",
+                "riskAction": "Which drivers had recent safety alerts?",
+                "fuel": "Fuel consumption report",
+                "fuelAction": "Generate a fuel consumption report for vehicles.",
+                "routes": "Optimize pending delivery routes",
+                "routesAction": "How can I optimize pending routes?"
+            },
+            "settings": {
+                "title": "Settings",
+                "provider": "AI Provider",
+                "model": "Model",
+                "recommended": "(Recommended)",
+                "apiKey": "API Key",
+                "save": "Save Settings",
+                "saving": "Saving..."
+            },
+            "welcome": {
+                "title": "Hello, Administrator",
+                "subtitle": "How can I help your fleet today?"
+            },
+            "inputPlaceholder": "Type your message to Copilot...",
+            "attachFile": "Attach file",
+            "disclaimer": "Copilot may make mistakes. Verify important information.",
+            "history": {
+                "search": "Search conversation",
+                "title": "History",
+                "conversation": "Conversation",
+                "delete": "Delete conversation",
+                "empty": "No saved conversations."
+            },
+            "newChat": "New Chat",
+            "settingsButton": "Settings"
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "loading": "Loading...",
+        "tabs": {
+            "general": "General",
+            "profile": "Profile",
+            "security": "Security",
+            "users": "Users"
+        },
+        "general": {
+            "title": "General Settings",
+            "changeLogo": "Change Logo",
+            "remove": "Remove",
+            "orgName": "Organization Name",
+            "primaryColor": "Primary Color",
+            "supportEmail": "Support Email",
+            "supportPhone": "Support Phone",
+            "save": "Save Changes",
+            "success": "General settings updated successfully!",
+            "error": "Error updating settings: "
+        },
+        "profile": {
+            "title": "Personal Information",
+            "uploadImage": "Upload Image",
+            "firstName": "First Name",
+            "username": "Username",
+            "email": "Email",
+            "phone": "Mobile Phone",
+            "addressTitle": "Address Information",
+            "country": "Country",
+            "address": "Address",
+            "city": "City",
+            "postalCode": "Postal Code",
+            "save": "Save Changes",
+            "success": "Profile updated successfully!",
+            "error": "Error updating profile: "
+        },
+        "security": {
+            "title": "Security",
+            "subtitle": "Manage your security preferences and password.",
+            "currentPassword": "Current Password",
+            "newPassword": "New Password",
+            "confirmPassword": "Confirm New Password",
+            "updatePassword": "Update Password",
+            "passwordMismatch": "Passwords do not match.",
+            "success": "Password updated successfully!",
+            "error": "Error updating password: ",
+            "twoFactorTitle": "Two-Factor Authentication",
+            "twoFactor": {
+                "google": "Use Google Authenticator app.",
+                "okta": "Okta app push notifications.",
+                "email": "Codes sent via email."
+            },
+            "active": "Active",
+            "activate": "Activate"
+        },
+        "users": {
+            "title": "User Management",
+            "addNew": "Add New"
+        }
+    },
+    "alerts": {
+        "title": "Alert Center",
+        "subtitle": "Monitor and manage important fleet notifications in real-time.",
+        "markAllRead": "Mark all as read",
+        "allMarkedRead": "All alerts marked as read.",
+        "types": {
+            "critical": "Critical",
+            "warning": "Warnings",
+            "info": "Informational",
+            "all": "All Types"
+        },
+        "status": {
+            "label": "Status:",
+            "all": "All",
+            "open": "Open",
+            "resolved": "Resolved"
+        },
+        "card": {
+            "critical": "Critical",
+            "warning": "Warning",
+            "info": "Info",
+            "vehicle": "Vehicle:"
+        },
+        "actions": {
+            "viewMap": "View on Map",
+            "archive": "Archive",
+            "openContext": "Open Context",
+            "closeContext": "Close Context"
+        },
+        "context": {
+            "title": "Alert Context",
+            "status": "Status: Pending",
+            "operationalDetails": "Operational Details",
+            "occurrence": "Occurrence:",
+            "aiSuggestion": "AI Suggestion:",
+            "aiSuggestionText": "Check recent maintenance history for this vehicle.",
+            "resolve": "Mark as Resolved"
+        },
+        "confirmResolve": "Are you sure you want to mark this alert as resolved?",
+        "resolveSuccess": "Alert resolved successfully!",
+        "resolveError": "Error resolving alert. Please try again.",
+        "archiveSuccess": "Alert archived successfully!",
+        "archiveError": "Error archiving alert.",
+        "empty": {
+            "title": "All clear here!",
+            "subtitle": "No alerts found in this category."
+        }
+    },
+    "reports": {
+        "loading": "Loading reports...",
+        "title": "Reports & Analytics",
+        "subtitle": "Detailed analysis of fleet performance, costs, and safety.",
+        "periods": {
+            "7days": "7 Days",
+            "30days": "30 Days",
+            "thisMonth": "This Month",
+            "year": "Year"
+        },
+        "export": {
+            "button": "Export",
+            "success": "Report export started. Download will begin shortly."
+        },
+        "kpi": {
+            "fuelCost": "Est. Fuel Cost",
+            "totalKm": "Total KM Traveled",
+            "safetyScore": "Safety Score",
+            "maintenance": "Vehicles in Maintenance",
+            "expected": "Within expected range"
+        },
+        "charts": {
+            "fuelConsumption": "Fuel Consumption (L/100km)",
+            "vehicleTypes": {
+                "all": "All Vehicles",
+                "heavy": "Heavy",
+                "medium": "Medium"
+            },
+            "months": [
+                "Jan",
+                "Feb",
+                "Mar",
+                "Apr",
+                "May",
+                "Jun",
+                "Jul",
+                "Aug",
+                "Sep",
+                "Oct",
+                "Nov",
+                "Dec"
+            ]
+        },
+        "fleetDistribution": {
+            "title": "Fleet Distribution",
+            "inTransit": "In Transit",
+            "stopped": "Stopped / Inactive",
+            "maintenance": "Maintenance",
+            "available": "Available"
+        },
+        "copilot": {
+            "title": "Copilot Insight",
+            "text": "Fuel efficiency dropped 1.2% on weekends. Consider reviewing Saturday routes to avoid local congestion."
+        },
+        "driverPerformance": {
+            "title": "Driver Performance",
+            "table": {
+                "driver": "Driver",
+                "trips": "Trips",
+                "totalKm": "Total KM",
+                "safety": "Safety",
+                "efficiency": "Efficiency",
+                "status": "Status",
+                "empty": "No performance data available",
+                "details": "View Details"
+            }
+        }
+    },
+    "files": {
+        "title": "File Manager",
+        "searchPlaceholder": "Search...",
+        "newFolder": "New Folder",
+        "upload": "Upload",
+        "home": "Home",
+        "folders": "Folders",
+        "recentFiles": "Recent Files",
+        "emptyRoot": "No files found in root.",
+        "noSearchResults": "No files match your search.",
+        "filesIn": "Files in",
+        "items": "items",
+        "emptyFolder": "This folder is empty.",
+        "details": {
+            "title": "Details",
+            "type": "Type",
+            "created": "Created at",
+            "modified": "Modified at",
+            "sharedWith": "Shared with",
+            "open": "Open",
+            "download": "Download File"
+        },
+        "preview": {
+            "noPreview": "Preview not available for this file type.",
+            "noOnlinePreview": "Online preview not available for recently uploaded local files."
+        },
+        "modal": {
+            "createTitle": "New Folder",
+            "renameTitle": "Rename Folder",
+            "inputPlaceholder": "Folder name",
+            "cancel": "Cancel",
+            "save": "Save",
+            "deleteConfirm": "Are you sure you want to delete this folder?"
+        },
+        "actions": {
+            "rename": "Rename",
+            "delete": "Delete"
+        },
+        "defaultFolders": {
+            "received": "Received (Drivers)",
+            "projectFiles": "Project Files",
+            "documents": "Documents",
+            "teamResources": "Team Resources",
+            "clientData": "Client Data",
+            "backupFiles": "Backup Files"
+        }
     },
     "sidebar": {
         "overview": "Overview",

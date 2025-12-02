@@ -72,12 +72,14 @@ serve(async (req) => {
         });
 
         // 7. Get History
-        const { data: history } = await supabaseClient
+        const { data: recentMessages } = await supabaseClient
             .from('copilot_messages')
             .select('role, content')
             .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true })
+            .order('created_at', { ascending: false })
             .limit(10);
+
+        const history = recentMessages?.reverse() || [];
 
         // 8. Generate AI Response
         let answer = '';
@@ -95,8 +97,14 @@ DIRETRIZES PRINCIPAIS:
 5. Seja conciso mas completo. Use formatação (negrito, listas) para facilitar a leitura.
 
 CONTEXTO DE DADOS:
-Você receberá dados sobre viagens, veículos, motoristas e alertas. Use esses dados para responder.
-Se os dados estiverem vazios ou insuficientes para a pergunta, informe o usuário.`;
+Você receberá um objeto JSON com:
+- vehicles_summary: Contagem de veículos por tipo (ex: Carro, Camião).
+- vehicles_details: Lista detalhada de veículos com placa, modelo, tipo, status e odômetro (km_current).
+- drivers_status: Lista de motoristas com status e total de viagens concluídas.
+- active_trips: Viagens em andamento.
+
+Use esses dados para responder perguntas como "quantos carros?", "quantos km o veículo X tem?", "quantas viagens o motorista Y fez?".
+Se os dados estiverem vazios ou insuficientes, informe o usuário.`;
 
         const formattedMessage = `pergunta_usuario: ${question}\n\ncontexto_bd: ${JSON.stringify(fleetContext || 'Nenhum dado disponível')}`;
 

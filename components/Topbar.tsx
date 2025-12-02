@@ -77,21 +77,34 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar }) => {
             if (!AudioContext) return;
 
             const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
 
-            osc.connect(gain);
-            gain.connect(ctx.destination);
+            // Note 1: Ding (High) - E5 (659.25 Hz)
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
 
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime); // High pitch
-            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5); // Drop pitch
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(659.25, ctx.currentTime);
+            gain1.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
 
-            gain.gain.setValueAtTime(0.1, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.6);
 
-            osc.start();
-            osc.stop(ctx.currentTime + 0.5);
+            // Note 2: Dong (Low) - C5 (523.25 Hz)
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(523.25, ctx.currentTime + 0.5);
+            gain2.gain.setValueAtTime(0.1, ctx.currentTime + 0.5);
+            gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
+
+            osc2.start(ctx.currentTime + 0.5);
+            osc2.stop(ctx.currentTime + 2.0);
         } catch (e) {
             console.error('Error playing sound', e);
         }

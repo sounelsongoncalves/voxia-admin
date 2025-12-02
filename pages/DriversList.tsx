@@ -234,7 +234,7 @@ export const DriversList: React.FC = () => {
           <span>{t('maintenance.showing', { count: drivers.length })}</span>
           <div className="flex gap-2">
             <button className="px-3 py-1.5 rounded-lg border border-surface-border hover:bg-surface-2 hover:text-txt-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
-              Anterior
+              {t('common.previous')}
             </button>
             <div className="flex items-center gap-1">
               <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-primary text-bg-main font-bold">1</button>
@@ -242,7 +242,7 @@ export const DriversList: React.FC = () => {
               <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-2 transition-colors">3</button>
             </div>
             <button className="px-3 py-1.5 rounded-lg border border-surface-border hover:bg-surface-2 hover:text-txt-primary transition-colors">
-              Próximo
+              {t('common.next')}
             </button>
           </div>
         </div>

@@ -114,3 +114,14 @@ export interface Admin {
   avatar_url?: string;
   active?: boolean;
 }
+
+export interface FileItem {
+  id: string;
+  name: string;
+  type: 'folder' | 'pdf' | 'jpg' | 'docx' | 'pptx' | 'xlsx' | 'png' | 'jpeg' | 'gif' | 'unknown';
+  size: string;
+  date: string;
+  url?: string; // For preview
+  sharedWith?: { name: string; avatar: string }[];
+  folderId?: string; // ID of the parent folder
+}
