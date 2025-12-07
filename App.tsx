@@ -32,6 +32,7 @@ import { AdminOnboarding } from './pages/AdminOnboarding';
 import { CopilotPage } from './pages/CopilotPage';
 import { FileManager } from './pages/FileManager';
 import { Setup } from './pages/Setup';
+import { Fueling } from './pages/Fueling';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -105,6 +106,7 @@ const App: React.FC = () => {
                 <Route path="/chat" element={<AdminRouteGuard><ChatCenter /></AdminRouteGuard>} />
                 <Route path="/files" element={<AdminRouteGuard><FileManager /></AdminRouteGuard>} />
                 <Route path="/copilot" element={<AdminRouteGuard><CopilotPage /></AdminRouteGuard>} />
+                <Route path="/fueling" element={<AdminRouteGuard><Fueling /></AdminRouteGuard>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>

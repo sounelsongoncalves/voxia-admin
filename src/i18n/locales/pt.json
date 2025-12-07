@@ -37,6 +37,7 @@
         "trailers": "Reboques",
         "drivers": "Motoristas",
         "alerts": "Alertas",
+        "fueling": "Abastecimentos",
         "reports": "Relatórios",
         "geofences": "Cercas Virtuais",
         "maintenance": "Manutenção",
@@ -47,6 +48,24 @@
         "users": "Utilizadores",
         "settings": "Configurações",
         "logout": "Sair"
+    },
+    "fueling": {
+        "title": "Gestão de Abastecimentos",
+        "last30days": "Últimos 30 dias",
+        "last7days": "Últimos 7 dias",
+        "today": "Hoje",
+        "exportPdf": "Exportar PDF",
+        "vehicle": "Veículo",
+        "trailer": "Reboque",
+        "driver": "Motorista",
+        "liters": "Litros",
+        "type": "Tipo Combustível",
+        "date": "Data/Hora",
+        "filterVehicle": "Filtrar por Veículo",
+        "allVehicles": "Todos os Veículos",
+        "totalLiters": "Total Litros",
+        "totalCost": "Custo Estimado",
+        "noData": "Sem dados de abastecimento para o período selecionado."
     },
     "copilot": {
         "title": "IA Voxia",

@@ -2,13 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.2s ease-out;
+@layer base {
+  :root {
+    --background: 224 7% 10%; /* #0B0D10 - Dark Background */
+    --foreground: 210 20% 98%; /* Light text */
+
+    --card: 222 8% 12%; /* Slightly lighter than bg */
+    --card-foreground: 210 20% 98%;
+
+    --popover: 224 7% 12%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 161 94% 30%; /* #00CC99 (approx) -> Brandt Green */
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 217 19% 27%; /* Dark gray/blue for secondary actions */
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 217 19% 27%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 19% 27%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 217 19% 27%;
+    --input: 217 19% 27%;
+    --ring: 161 94% 30%;
+
+    --radius: 0.5rem;
   }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }

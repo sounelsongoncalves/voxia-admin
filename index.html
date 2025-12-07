@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <title>Voxia Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -14,82 +13,6 @@
     rel="stylesheet">
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            bg: {
-              main: '#0B0D10', // App background
-              sec: '#111418',  // Secondary background
-            },
-            surface: {
-              1: '#161A1F', // Cards, Inputs, Tables
-              2: '#1D2229', // Elevated, Hovers
-              3: '#2A2E35', // Sidebar, Topbar, Headers
-              border: '#2A2E35', // Dividers
-            },
-            txt: {
-              primary: '#FFFFFF',
-              secondary: '#E0E0E0',
-              tertiary: '#A0A0A0', // Hints, placeholders
-              disabled: '#7A7A7A',
-            },
-            brand: {
-              primary: '#00CC99', // Uber Green - CTA
-              hover: '#00A37A',   // Pressed
-            },
-            semantic: {
-              info: '#007AFF',
-              warning: '#FFC107',
-              error: '#FF3B30',
-              success: '#00CC99',
-              neutral: '#8A8F98', // Offline
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    body {
-      background-color: #0B0D10;
-      color: #E0E0E0;
-    }
-
-    /* Custom Scrollbar for Dark Theme */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #111418;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #2A2E35;
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #00CC99;
-    }
-
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-
-    .fill-icon {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  </style>
-  <link rel="stylesheet" href="/index.css">
 </head>
 
 <body>
