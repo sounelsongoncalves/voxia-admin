@@ -21,11 +21,11 @@ export const AdminRouteGuard: React.FC<AdminRouteGuardProps> = ({ children }) =>
                 return;
             }
 
-            // Check if user is in admins table
+            // Check if user is in admin_users table (by email for simplified approach)
             const { data: admin, error } = await supabase
-                .from('admins')
+                .from('admin_users')
                 .select('id, role')
-                .eq('id', session.user.id)
+                .eq('email', session.user.email)
                 .single();
 
             if (error || !admin) {

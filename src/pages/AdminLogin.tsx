@@ -32,16 +32,26 @@ export const AdminLogin: React.FC = () => {
 
       if (authError) throw authError;
 
-      const { data: admin, error: adminError } = await supabase
-        .from('admins')
+      // 1. First simplified approach: Check if email exists in admin_users table
+      // This is because we might not have linked auth.users.id to admin_users.id yet
+      const { data: adminByEmail, error: emailError } = await supabase
+        .from('admin_users')
         .select('id, role')
-        .eq('id', authData.user.id)
+        .eq('email', email)
         .single();
 
-      if (adminError || !admin) {
-        await supabase.auth.signOut();
-        throw new Error('Acesso negado. Não tem permissões de administrador.');
+      if (emailError || !adminByEmail) {
+         // Fallback or strict check depending on requirements.
+         // If we strictly follow the prompt: "Guard: If email exists in AdminUser, allow access."
+         await supabase.auth.signOut();
+         throw new Error('Acesso negado. Não tem permissões de administrador.');
       }
+
+      // Optional: Update last_login_at
+      await supabase
+        .from('admin_users')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', adminByEmail.id);
 
       navigate('/');
     } catch (err: any) {
